@@ -1,0 +1,17 @@
+name: media_info
+description: Determine multimedia file properties like width, height, duration
+version: 0.0.1
+author: Sebastian Roth <seb@ivity.asia>
+homepage: https://www.ivity.asia
+
+environment:
+  sdk: ">=2.0.0-dev.68.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+flutter:
+  plugin:
+    androidPackage: asia.ivity.mediainfo
+    pluginClass: MediaInfoPlugin

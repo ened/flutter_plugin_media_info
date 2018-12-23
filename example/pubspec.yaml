@@ -1,0 +1,18 @@
+name: media_info_example
+description: Demonstrates how to use the media_info plugin.
+publish_to: 'none'
+
+environment:
+  sdk: ">=2.0.0-dev.68.0 <3.0.0"
+
+dependencies:
+  file_picker: ^1.0.2
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  media_info:
+    path: ../
