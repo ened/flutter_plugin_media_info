@@ -15,7 +15,8 @@ class VideoUtils {
             val height: Int,
             val frameRate: Float,
             val durationMs: Long,
-            val numTracks: Short
+            val numTracks: Short,
+            val mimeType: String
     ) {
         fun toMap(): HashMap<String, String> = HashMap<String, String>().apply {
             this.putAll(mapOf(
@@ -23,7 +24,8 @@ class VideoUtils {
                     "height" to height.toString(),
                     "frameRate" to frameRate.toString(),
                     "durationMs" to durationMs.toString(),
-                    "numTracks" to numTracks.toString()
+                    "numTracks" to numTracks.toString(),
+                    "mimeType" to mimeType
             ))
         }
 
@@ -51,7 +53,9 @@ class VideoUtils {
 
                 val numTracks = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_NUM_TRACKS).toShort()
 
-                return VideoDetail(width, height, frameRate, durationMs, numTracks)
+                val mimeType = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE)
+
+                return VideoDetail(width, height, frameRate, durationMs, numTracks, mimeType)
             } catch (e: Exception) {
                 Log.e(TAG, file.absolutePath, e)
                 return null
