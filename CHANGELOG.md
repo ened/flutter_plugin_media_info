@@ -1,3 +1,7 @@
+## 0.0.3
+
+* [Android] Thumbnail support for video / image files
+
 ## 0.0.2
 
 * Detect mimeType

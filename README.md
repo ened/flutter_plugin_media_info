@@ -16,8 +16,11 @@ Currently supported properties:
 * mime type
 * number of tracks
 
+Additionally, video thumbnails can be generated.
+
 ## Implementation Status
 
-[~] Video Support (Android only)
-[ ] Audio Support
-[ ] Photo Support
+- [~] Video Support (Android only)
+- [ ] Audio Support
+- [ ] Photo Support
+- [~] Thumbnails (Android only)

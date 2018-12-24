@@ -7,6 +7,7 @@ environment:
 
 dependencies:
   file_picker: ^1.0.2
+  path_provider: any
   flutter:
     sdk: flutter
 
