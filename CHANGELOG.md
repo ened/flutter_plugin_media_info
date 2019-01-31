@@ -1,3 +1,8 @@
+## 0.0.4
+
+* Set Android compile SDK version to 28
+* Migrate to AndroidX
+
 ## 0.0.3+1
 
 * Upgrade gradle & kotlin dependencies
