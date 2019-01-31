@@ -20,7 +20,9 @@ Additionally, video thumbnails can be generated.
 
 ## Implementation Status
 
-- [~] Video Support (Android only)
+- [x] Video Support (*Android*)
+- [ ] Video Support (*iOS*)
 - [ ] Audio Support
 - [ ] Photo Support
-- [~] Thumbnails (Android only)
+- [ ] Thumbnails (*Android only*)
+- [ ] Integration tests & CI

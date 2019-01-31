@@ -1,3 +1,7 @@
+## 0.0.3+1
+
+* Upgrade gradle & kotlin dependencies
+
 ## 0.0.3
 
 * [Android] Thumbnail support for video / image files
