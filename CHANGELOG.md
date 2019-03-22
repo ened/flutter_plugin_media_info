@@ -1,3 +1,7 @@
+## 0.0.4+1
+
+* Bump gradle plugin version
+
 ## 0.0.4
 
 * Set Android compile SDK version to 28
