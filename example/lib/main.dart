@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -14,51 +15,100 @@ class MyApp extends StatefulWidget {
   _MyAppState createState() => _MyAppState();
 }
 
+const List<int> _imageWidths = [
+  320,
+  480,
+  640,
+  848,
+  960,
+  1024,
+  1200,
+  1280,
+  1440,
+  1600,
+  1920,
+];
+
 class _MyAppState extends State<MyApp> {
   String _file;
   Map<String, dynamic> _mediaInfo;
-  String _thumbnail;
+  final Map<int, Future<String>> _thumbnails = <int, Future<String>>{};
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      showPerformanceOverlay: false,
       home: Scaffold(
         appBar: AppBar(
           title: const Text('Media Info App'),
         ),
         body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              children: <Widget>[
-                Spacer(flex: 3),
-                Text(_file ?? 'Please select a file'),
-                Spacer(flex: 1),
-                Text(
-                  (_mediaInfo?.keys ?? [])
-                      .map((k) => '$k: ${_mediaInfo[k]}')
-                      .join(',\n\n'),
-                  style: Theme.of(context).textTheme.body2,
-                ),
-                Spacer(flex: 1),
-                AspectRatio(
-                  aspectRatio: 16 / 9,
-                  child:
-                      _thumbnail != null ? Image.file(File(_thumbnail)) : null,
-                ),
-                Spacer(flex: 3),
-                _buildSelectButton(),
-              ],
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Text(_file ?? 'Please select a file'),
+                  Text(
+                    (_mediaInfo?.keys ?? <String>[])
+                        .map((String k) => '$k: ${_mediaInfo[k]}')
+                        .join(',\n\n'),
+                    style: Theme.of(context).textTheme.body2,
+                  ),
+                  Builder(
+                    builder: (BuildContext context) {
+                      if (_thumbnails.isEmpty) {
+                        return const SizedBox();
+                      }
+
+                      final List<int> listW = _thumbnails.keys.toList();
+                      listW.sort();
+
+                      final List<Widget> widgets = <Widget>[];
+                      for (final int width in listW) {
+                        widgets.addAll([
+                          Text('Width: $width'),
+                          FutureBuilder<String>(
+                            future: _thumbnails[width],
+                            builder: (BuildContext context, snapshot) {
+                              if (snapshot.hasData) {
+                                return Image.file(File(snapshot.data));
+                              }
+                              if (snapshot.hasError) {
+                                return Text(
+                                  'E: ${snapshot.error}',
+                                  style: TextStyle(color: Colors.red),
+                                );
+                              }
+
+                              return const SizedBox();
+                            },
+                          ),
+                          Divider(),
+                        ]);
+                      }
+
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: widgets,
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ),
+        floatingActionButton: _buildSelectButton(),
       ),
     );
   }
 
   Widget _buildSelectButton() {
-    return RaisedButton(
-      child: const Text('Select File'),
+    return FloatingActionButton(
+      child: Icon(Icons.attach_file),
       onPressed: () async {
         final String mediaFile = await FilePicker.getFilePath();
 
@@ -69,13 +119,13 @@ class _MyAppState extends State<MyApp> {
         setState(() {
           _file = mediaFile;
           _mediaInfo = null;
-          _thumbnail = null;
+          _thumbnails.clear();
         });
 
         final Map<String, dynamic> mediaInfo =
             await MediaInfo.getMediaInfo(mediaFile);
 
-        if (!mounted) {
+        if (!mounted || mediaInfo == null) {
           return;
         }
 
@@ -85,11 +135,22 @@ class _MyAppState extends State<MyApp> {
 
         final Directory cacheDir = await getTemporaryDirectory();
         final int cacheName = _file.hashCode;
-        final String target = File('${cacheDir.path}/$cacheName').path;
-        final bool thumbOk =
-            await MediaInfo.generateThumbnail(_file, target, 1920, 1080);
 
-        setState(() => _thumbnail = thumbOk ? target : null);
+        int w = mediaInfo['width'];
+        int h = mediaInfo['height'];
+        final double ratio = w / h;
+
+        for (final int width in _imageWidths) {
+          final String target = File('${cacheDir.path}/$cacheName.$width').path;
+          if (File(target).existsSync()) {
+            File(target).deleteSync();
+          }
+
+          _thumbnails[width] =
+              MediaInfo.generateThumbnail(_file, target, width, width ~/ ratio);
+        }
+
+        setState(() {});
       },
     );
   }

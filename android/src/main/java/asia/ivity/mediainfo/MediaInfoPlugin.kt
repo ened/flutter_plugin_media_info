@@ -51,20 +51,20 @@ class MediaInfoPlugin(private val context: Context?) : MethodCallHandler {
 
             if (target.exists()) {
                 Log.e(TAG, "Target $target file already exists.")
-                return@submit result.success(false)
+                return@submit result.error("MediaInfo", "FileOverwriteDenied", null)
             }
 
             if (context == null) {
                 Log.e(TAG, "Context disappeared")
-                return@submit result.success(false)
+                return@submit result.error("MediaInfo", "ContextDisappeared", null)
             }
 
             val file = ThumbnailUtils.generateVideoThumbnail(context, args["path"] as String, args["width"] as Int, args["height"] as Int)
             if (file != null && file.renameTo(target)) {
-                result.success(true)
+                result.success(target)
             } else {
-                Log.e(TAG, "File does not generate or does not exist, fuck: $file")
-                result.success(false)
+                Log.e(TAG, "File does not generate or does not exist: $file")
+                result.error("MediaInfo", "FileCreationFailed", null)
             }
         }
     }

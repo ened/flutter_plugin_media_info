@@ -38,8 +38,52 @@
 
       result(d);
   } else if ([@"generateThumbnail" isEqualToString:call.method]) {
+      NSDictionary *args = call.arguments;
       
-      result([NSNumber numberWithBool:NO]);
+      NSString *path = [args objectForKey:@"path"];
+      NSString *target = [args objectForKey:@"target"];
+      NSNumber *width = [args objectForKey:@"width"];
+      NSNumber *height = [args objectForKey:@"height"];
+      
+      if ([[NSFileManager defaultManager] fileExistsAtPath: target]) {
+          result([FlutterError errorWithCode:@"MediaInfo" message:@"FileOverwriteDenied" details:nil]);
+          return;
+      }
+      
+      NSURL *mediaURL = [NSURL fileURLWithPath:path];
+      AVAsset *asset = [AVURLAsset URLAssetWithURL:mediaURL options:nil];
+
+      CGFloat durationSeconds = CMTimeGetSeconds(asset.duration);
+      AVAssetImageGenerator *generator = [[AVAssetImageGenerator alloc] initWithAsset:asset];
+      
+      generator.appliesPreferredTrackTransform = YES;
+      
+      CMTime time = CMTimeMakeWithSeconds(durationSeconds / 3.0, 600);
+      
+      [generator generateCGImagesAsynchronouslyForTimes:@[[NSValue valueWithCMTime:time]]
+                                      completionHandler:^(CMTime requestedTime,
+                                                          CGImageRef  _Nullable image,
+                                                          CMTime actualTime,
+                                                          AVAssetImageGeneratorResult generatorResult,
+                                                          NSError * _Nullable error) {
+                                          if (error) {
+                                              NSLog(@"Can not generate image: %@", error);
+                                              result([FlutterError errorWithCode:@"MediaInfo" message:@"FileCreationFailed" details:nil]);
+                                          }
+                                          
+                                          UIGraphicsBeginImageContext(CGSizeMake(width.intValue, height.intValue));
+                                          UIImage *img = [UIImage imageWithCGImage:image];
+                                          [img drawInRect:CGRectMake(0, 0, width.intValue, height.intValue)];
+                                          UIImage *resized = UIGraphicsGetImageFromCurrentImageContext();
+                                          UIGraphicsEndImageContext();
+                                          
+                                          NSData *jpgData = UIImageJPEGRepresentation(resized, 80);
+                                          
+                                          [jpgData writeToFile:target atomically:YES];
+                                          
+                                          result(target);
+                                      }];
+      
   } else {
     result(FlutterMethodNotImplemented);
   }
