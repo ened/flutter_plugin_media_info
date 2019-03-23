@@ -1,6 +1,5 @@
 # media_info
 
-[![Build Status](https://travis-ci.org/ened/flutter_plugin_media_info.svg?branch=master)](https://travis-ci.org/ened/flutter_plugin_media_info)
 [![Pub](https://img.shields.io/pub/v/media_info.svg)](https://pub.dartlang.org/packages/media_info)
 
 Utilizes platform code to determine audio, video & photo properties.
@@ -16,13 +15,4 @@ Currently supported properties:
 * mime type
 * number of tracks
 
-Additionally, video thumbnails can be generated.
-
-## Implementation Status
-
-- [x] Video Support (*Android*)
-- [ ] Video Support (*iOS*)
-- [ ] Audio Support
-- [ ] Photo Support
-- [ ] Thumbnails (*Android only*)
-- [ ] Integration tests & CI
+Additionally, thumbnails can be generated.
