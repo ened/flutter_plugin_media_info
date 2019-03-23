@@ -1,6 +1,6 @@
 name: media_info
 description: Determine multimedia file properties like width, height, duration
-version: 0.0.4+1
+version: 0.1.0
 author: Sebastian Roth <seb@ivity.asia>
 homepage: https://github.com/ened/flutter_plugin_media_info
 

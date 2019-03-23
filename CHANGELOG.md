@@ -1,3 +1,10 @@
+## 0.1.0
+
+* getMediaInfo implementation for iOS
+* generateThumbnail implementation for iOS
+* improve generateThumbnail API to return a Future<String> with error cases
+  instead of a boolean future.
+
 ## 0.0.4+1
 
 * Bump gradle plugin version
