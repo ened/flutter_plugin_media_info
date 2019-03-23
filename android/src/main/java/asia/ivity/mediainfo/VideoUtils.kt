@@ -18,13 +18,13 @@ class VideoUtils {
             val numTracks: Short,
             val mimeType: String
     ) {
-        fun toMap(): HashMap<String, String> = HashMap<String, String>().apply {
+        fun toMap(): HashMap<String, Any> = HashMap<String, Any>().apply {
             this.putAll(mapOf(
-                    "width" to width.toString(),
-                    "height" to height.toString(),
-                    "frameRate" to frameRate.toString(),
-                    "durationMs" to durationMs.toString(),
-                    "numTracks" to numTracks.toString(),
+                    "width" to width,
+                    "height" to height,
+                    "frameRate" to frameRate,
+                    "durationMs" to durationMs,
+                    "numTracks" to numTracks.toInt(),
                     "mimeType" to mimeType
             ))
         }
