@@ -1,3 +1,8 @@
+## 0.2.0
+
+* Require object instance to instead of providing static methods. This improves
+  mocking & testing capabilities.
+
 ## 0.1.0
 
 * getMediaInfo implementation for iOS
