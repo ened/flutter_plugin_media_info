@@ -1,3 +1,7 @@
+## 0.2.1
+
+* Prevent crashes on iOS when asset track list is empty.
+
 ## 0.2.0
 
 * Require object instance to instead of providing static methods. This improves
