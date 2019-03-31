@@ -20,7 +20,7 @@ class MediaInfo {
   /// - durationMs (long)
   /// - numTracks (int)
   /// - mimeType (String)
-  static Future<Map<String, dynamic>> getMediaInfo(String path) async {
+  Future<Map<String, dynamic>> getMediaInfo(String path) async {
     final dynamic version = await _channel.invokeMethod('getMediaInfo', path);
 
     return Map<String, dynamic>.from(version);
@@ -36,7 +36,7 @@ class MediaInfo {
   ///
   /// Errors will be propagated to the consumer of this API and need to be
   /// handled in the onError handler of the returned [Future].
-  static Future<String> generateThumbnail(
+  Future<String> generateThumbnail(
     /// Absolute source file path, without the file:// scheme prepended.
     String path,
 

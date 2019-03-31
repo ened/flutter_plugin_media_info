@@ -31,8 +31,10 @@ const List<int> _imageWidths = [
 
 class _MyAppState extends State<MyApp> {
   String _file;
-  Map<String, dynamic> _mediaInfo;
+  Map<String, dynamic> _mediaInfoCache;
   final Map<int, Future<String>> _thumbnails = <int, Future<String>>{};
+
+  final MediaInfo _mediaInfo = MediaInfo();
 
   @override
   Widget build(BuildContext context) {
@@ -52,8 +54,8 @@ class _MyAppState extends State<MyApp> {
                 children: <Widget>[
                   Text(_file ?? 'Please select a file'),
                   Text(
-                    (_mediaInfo?.keys ?? <String>[])
-                        .map((String k) => '$k: ${_mediaInfo[k]}')
+                    (_mediaInfoCache?.keys ?? <String>[])
+                        .map((String k) => '$k: ${_mediaInfoCache[k]}')
                         .join(',\n\n'),
                     style: Theme.of(context).textTheme.body2,
                   ),
@@ -118,19 +120,19 @@ class _MyAppState extends State<MyApp> {
 
         setState(() {
           _file = mediaFile;
-          _mediaInfo = null;
+          _mediaInfoCache = null;
           _thumbnails.clear();
         });
 
         final Map<String, dynamic> mediaInfo =
-            await MediaInfo.getMediaInfo(mediaFile);
+            await _mediaInfo.getMediaInfo(mediaFile);
 
         if (!mounted || mediaInfo == null) {
           return;
         }
 
         setState(() {
-          _mediaInfo = mediaInfo;
+          _mediaInfoCache = mediaInfo;
         });
 
         final Directory cacheDir = await getTemporaryDirectory();
@@ -146,8 +148,8 @@ class _MyAppState extends State<MyApp> {
             File(target).deleteSync();
           }
 
-          _thumbnails[width] =
-              MediaInfo.generateThumbnail(_file, target, width, width ~/ ratio);
+          _thumbnails[width] = _mediaInfo.generateThumbnail(
+              _file, target, width, width ~/ ratio);
         }
 
         setState(() {});
