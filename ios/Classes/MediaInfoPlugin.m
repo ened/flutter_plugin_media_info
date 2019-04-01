@@ -61,7 +61,7 @@
            forKey:@"numTracks"];
     } else {
       NSLog(@"[media_info] Can not read: %@", mediaURL);
-      result(nil);
+      result([FlutterError errorWithCode:@"MediaInfo" message:@"InvalidVideo" details:nil]);
       return;
     }
   } else if ([mime hasPrefix:@"image/"]) {
@@ -72,7 +72,7 @@
          forKey:@"width"];
     [d setValue:[imageHeader objectForKey:@"PixelHeight"]
          forKey:@"height"];
-
+    
   }
   
   result(d);
@@ -110,6 +110,7 @@
                                     if (error) {
                                       NSLog(@"Can not generate image: %@", error);
                                       result([FlutterError errorWithCode:@"MediaInfo" message:@"FileCreationFailed" details:nil]);
+                                      return;
                                     }
                                     
                                     UIGraphicsBeginImageContext(CGSizeMake(width.intValue, height.intValue));
