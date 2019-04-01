@@ -1,3 +1,8 @@
+## 0.2.2
+
+* iOS: Read mimeType
+* iOS: Detect image width & height
+
 ## 0.2.1
 
 * Prevent crashes on iOS when asset track list is empty.
