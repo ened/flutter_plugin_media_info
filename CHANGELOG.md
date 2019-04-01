@@ -1,3 +1,7 @@
+## 0.2.2+1
+
+* Do not return invalid values when detection fails. Throw flutter errors instead.
+
 ## 0.2.2
 
 * iOS: Read mimeType
