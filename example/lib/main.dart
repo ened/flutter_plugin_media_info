@@ -138,18 +138,22 @@ class _MyAppState extends State<MyApp> {
         final Directory cacheDir = await getTemporaryDirectory();
         final int cacheName = _file.hashCode;
 
-        int w = mediaInfo['width'];
-        int h = mediaInfo['height'];
+        final int w = mediaInfo['width'];
+        final int h = mediaInfo['height'];
         final double ratio = w / h;
 
-        for (final int width in _imageWidths) {
-          final String target = File('${cacheDir.path}/$cacheName.$width').path;
-          if (File(target).existsSync()) {
-            File(target).deleteSync();
-          }
+        final String mime = mediaInfo['mimeType'];
+        if (mime.startsWith("video/")) {
+          for (final int width in _imageWidths) {
+            final String target =
+                File('${cacheDir.path}/$cacheName.$width').path;
+            if (File(target).existsSync()) {
+              File(target).deleteSync();
+            }
 
-          _thumbnails[width] = _mediaInfo.generateThumbnail(
-              _file, target, width, width ~/ ratio);
+            _thumbnails[width] = _mediaInfo.generateThumbnail(
+                _file, target, width, width ~/ ratio);
+          }
         }
 
         setState(() {});

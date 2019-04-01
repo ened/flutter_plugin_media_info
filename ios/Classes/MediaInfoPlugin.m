@@ -1,10 +1,13 @@
 #import "MediaInfoPlugin.h"
 
 #import <AVFoundation/AVFoundation.h>
+#import <ImageIO/ImageIO.h>
+#import <MobileCoreServices/MobileCoreServices.h>
 
 @interface MediaInfoPlugin ()
 - (void)handleGetMediaInfo:(id)arguments withResult:(FlutterResult)result;
 - (void)handleGenerateThumbnail:(id)arguments withResult:(FlutterResult)result;
++ (NSString*)mimeTypeForFileAtPath: (NSString *) path;
 @end
 
 @implementation MediaInfoPlugin
@@ -33,29 +36,46 @@
   NSMutableDictionary *d = [NSMutableDictionary dictionary];
   
   NSURL *mediaURL = [NSURL fileURLWithPath:arguments];
-  AVURLAsset *asset = [AVURLAsset URLAssetWithURL:mediaURL options:nil];
-  NSArray *tracks = [asset tracksWithMediaType:AVMediaTypeVideo];
   
-  if ([tracks count] > 0) {
-    AVAssetTrack *track = [tracks objectAtIndex:0];
+  NSString *mime = [MediaInfoPlugin mimeTypeForFileAtPath:mediaURL.path];
+  
+  [d setValue:mime
+       forKey:@"mimeType"];
+  
+  if ([mime hasPrefix:@"video/"]) {
+    AVURLAsset *asset = [AVURLAsset URLAssetWithURL:mediaURL options:nil];
+    NSArray *tracks = [asset tracksWithMediaType:AVMediaTypeVideo];
     
-    [d setValue:[NSNumber numberWithInteger:(NSInteger) track.naturalSize.width]
+    if ([tracks count] > 0) {
+      AVAssetTrack *track = [tracks objectAtIndex:0];
+      
+      [d setValue:[NSNumber numberWithInteger:(NSInteger) track.naturalSize.width]
+           forKey:@"width"];
+      [d setValue:[NSNumber numberWithInteger:(NSInteger) track.naturalSize.height]
+           forKey:@"height"];
+      [d setValue:[NSNumber numberWithFloat:track.nominalFrameRate]
+           forKey:@"frameRate"];
+      [d setValue:[NSNumber numberWithLong:CMTimeGetSeconds(track.timeRange.duration) * 1000]
+           forKey:@"durationMs"];
+      [d setValue:[NSNumber numberWithInteger:[tracks count]]
+           forKey:@"numTracks"];
+    } else {
+      NSLog(@"[media_info] Can not read: %@", mediaURL);
+      result(nil);
+      return;
+    }
+  } else if ([mime hasPrefix:@"image/"]) {
+    CGImageSourceRef source = CGImageSourceCreateWithURL((CFURLRef)mediaURL, NULL);
+    NSDictionary* imageHeader = (__bridge NSDictionary*) CGImageSourceCopyPropertiesAtIndex(source, 0, NULL);
+    
+    [d setValue:[imageHeader objectForKey:@"PixelWidth"]
          forKey:@"width"];
-    [d setValue:[NSNumber numberWithInteger:(NSInteger) track.naturalSize.height]
+    [d setValue:[imageHeader objectForKey:@"PixelHeight"]
          forKey:@"height"];
-    [d setValue:[NSNumber numberWithFloat:track.nominalFrameRate]
-         forKey:@"frameRate"];
-    [d setValue:[NSNumber numberWithLong:CMTimeGetSeconds(track.timeRange.duration) * 1000]
-         forKey:@"durationMs"];
-    [d setValue:[NSNumber numberWithInteger:[tracks count]]
-         forKey:@"numTracks"];
-    // TODO: Need to find a method to determine the mimetype.
-    
-    result(d);
-  } else {
-    NSLog(@"[media_info] Can not read: %@", mediaURL);
-    result(nil);
+
   }
+  
+  result(d);
 }
 
 - (void)handleGenerateThumbnail:(id)arguments withResult:(FlutterResult)result {
@@ -105,6 +125,23 @@
                                     result(target);
                                   }];
   
+}
+
+// https://stackoverflow.com/a/5998683/375209
++ (NSString*)mimeTypeForFileAtPath: (NSString *) path {
+  if (![[NSFileManager defaultManager] fileExistsAtPath:path]) {
+    return nil;
+  }
+  // Borrowed from https://stackoverflow.com/questions/5996797/determine-mime-type-of-nsdata-loaded-from-a-file
+  // itself, derived from  https://stackoverflow.com/questions/2439020/wheres-the-iphone-mime-type-database
+  CFStringRef UTI = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, (__bridge CFStringRef)[path pathExtension], NULL);
+  CFStringRef mimeType = UTTypeCopyPreferredTagWithClass (UTI, kUTTagClassMIMEType);
+  CFRelease(UTI);
+  if (!mimeType) {
+    return @"application/octet-stream";
+  }
+  
+  return CFBridgingRelease(mimeType);
 }
 
 @end
