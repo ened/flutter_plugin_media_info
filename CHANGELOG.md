@@ -1,3 +1,7 @@
+## 0.3.0
+
+* Ensure Android results are always submitted on the main thread
+
 ## 0.2.2+1
 
 * Do not return invalid values when detection fails. Throw flutter errors instead.
