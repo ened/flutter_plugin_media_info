@@ -1,6 +1,8 @@
 package asia.ivity.mediainfo
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -15,24 +17,39 @@ import java.util.concurrent.Executors
  * MediaInfoPlugin
  */
 class MediaInfoPlugin(private val context: Context?) : MethodCallHandler {
-
     /**
      * All thumbnails will be generated on a background thread.
      */
-    private val thumbnailExecutor: ExecutorService = Executors.newSingleThreadExecutor()
+    private lateinit var thumbnailExecutor: ExecutorService
 
-    override fun onMethodCall(call: MethodCall, result: Result) = when (call.method) {
-        "getMediaInfo" -> {
-            val path = call.arguments as String
+    /**
+     * Flutter results must be posted back on the main thread though.
+     */
+    private lateinit var mainThreadHandler: Handler
 
-            handleMediaInfo(path, result)
+    override fun onMethodCall(call: MethodCall, result: Result) {
+        if (!this::thumbnailExecutor.isInitialized) {
+            thumbnailExecutor =
+                Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
         }
-        "generateThumbnail" -> {
-            val args = call.arguments as HashMap<*, *>
 
-            handleThumbnail(args, result, context)
+        if (!this::mainThreadHandler.isInitialized) {
+            mainThreadHandler = Handler(Looper.myLooper())
         }
-        else -> result.notImplemented()
+
+        return when (call.method) {
+            "getMediaInfo" -> {
+                val path = call.arguments as String
+
+                handleMediaInfo(path, result)
+            }
+            "generateThumbnail" -> {
+                val args = call.arguments as HashMap<*, *>
+
+                handleThumbnail(args, result, context, mainThreadHandler)
+            }
+            else -> result.notImplemented()
+        }
     }
 
     private fun handleMediaInfo(path: String, result: Result) {
@@ -45,26 +62,38 @@ class MediaInfoPlugin(private val context: Context?) : MethodCallHandler {
         }
     }
 
-    private fun handleThumbnail(args: HashMap<*, *>, result: Result, context: Context?) {
+    private fun handleThumbnail(args: HashMap<*, *>, result: Result, context: Context?, mainThreadHandler: Handler) {
         thumbnailExecutor.submit {
             val target = File(args["target"] as String)
 
             if (target.exists()) {
                 Log.e(TAG, "Target $target file already exists.")
-                return@submit result.error("MediaInfo", "FileOverwriteDenied", null)
+                mainThreadHandler.post {
+                    result.error("MediaInfo", "FileOverwriteDenied", null)
+                }
+                return@submit
             }
 
             if (context == null) {
                 Log.e(TAG, "Context disappeared")
-                return@submit result.error("MediaInfo", "ContextDisappeared", null)
+                mainThreadHandler.post {
+                    result.error("MediaInfo", "ContextDisappeared", null)
+                }
+                return@submit
             }
 
-            val file = ThumbnailUtils.generateVideoThumbnail(context, args["path"] as String, args["width"] as Int, args["height"] as Int)
+            val file = ThumbnailUtils.generateVideoThumbnail(context, args["path"] as String,
+                                                             args["width"] as Int,
+                                                             args["height"] as Int)
             if (file != null && file.renameTo(target)) {
-                result.success(target)
+                mainThreadHandler.post {
+                    result.success(target.absolutePath)
+                }
             } else {
                 Log.e(TAG, "File does not generate or does not exist: $file")
-                result.error("MediaInfo", "FileCreationFailed", null)
+                mainThreadHandler.post {
+                    result.error("MediaInfo", "FileCreationFailed", null)
+                }
             }
         }
     }
@@ -79,8 +108,7 @@ class MediaInfoPlugin(private val context: Context?) : MethodCallHandler {
          */
         @JvmStatic
         fun registerWith(registrar: Registrar) {
-            val channel = MethodChannel(registrar.messenger(),
-                    "$NAMESPACE/media_info")
+            val channel = MethodChannel(registrar.messenger(), "$NAMESPACE/media_info")
             channel.setMethodCallHandler(MediaInfoPlugin(registrar.context()))
         }
     }
