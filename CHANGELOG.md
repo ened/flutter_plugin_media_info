@@ -1,3 +1,8 @@
+## 0.4.0
+
+* Replace Kotlin with Java 
+* Various bugfixes
+
 ## 0.3.0
 
 * Ensure Android results are always submitted on the main thread
