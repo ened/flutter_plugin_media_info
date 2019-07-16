@@ -2,7 +2,7 @@ package asia.ivity.mediainfo;
 
 import java.util.HashMap;
 
-public class VideoDetail {
+class VideoDetail {
 
   private final int width;
   private final int height;
@@ -11,7 +11,7 @@ public class VideoDetail {
   private final short numTracks;
   private final String mimeType;
 
-  public VideoDetail(int width, int height, float frameRate, long durationMs, short numTracks,
+  VideoDetail(int width, int height, float frameRate, long durationMs, short numTracks,
       String mimeType) {
     this.width = width;
     this.height = height;

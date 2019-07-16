@@ -4,7 +4,6 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import asia.ivity.mediainfo.VideoUtils.VideoDetail;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
@@ -58,12 +57,12 @@ public class MediaInfoPlugin implements MethodCallHandler {
 
 
   private void handleMediaInfo(String path, Result result) {
-    VideoDetail info = VideoUtils.Companion.readVideoDetail(new File(path));
+    VideoDetail info = VideoUtils.readVideoDetail(new File(path));
 
     if (info != null) {
       result.success(info.toMap());
     } else {
-      result.success(null);
+      result.error("MediaInfo", "InvalidFile", null);
     }
   }
 
@@ -85,7 +84,7 @@ public class MediaInfoPlugin implements MethodCallHandler {
         return;
       }
 
-      File file = ThumbnailUtils.INSTANCE.generateVideoThumbnail(context,
+      File file = ThumbnailUtils.generateVideoThumbnail(context,
           Objects.requireNonNull((String) args.get("path")),
           Objects.<Integer>requireNonNull((Integer) args.get("width")),
           Objects.<Integer>requireNonNull((Integer) args.get("height"))
@@ -94,7 +93,7 @@ public class MediaInfoPlugin implements MethodCallHandler {
       if (file != null && file.renameTo(target)) {
         mainThreadHandler.post(() -> result.success(target.getAbsolutePath()));
       } else {
-        Log.e(TAG, "File does not generate or does not exist: $file");
+        Log.e(TAG, "File does not generate or does not exist: " + file);
         mainThreadHandler.post(() -> result.error("MediaInfo", "FileCreationFailed", null));
       }
     });
