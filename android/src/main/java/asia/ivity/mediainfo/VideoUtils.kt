@@ -6,30 +6,8 @@ import android.media.MediaMetadataRetriever
 import android.os.Build
 import android.util.Log
 import java.io.File
-import java.util.*
 
 class VideoUtils {
-
-    data class VideoDetail(
-            val width: Int,
-            val height: Int,
-            val frameRate: Float,
-            val durationMs: Long,
-            val numTracks: Short,
-            val mimeType: String
-    ) {
-        fun toMap(): HashMap<String, Any> = HashMap<String, Any>().apply {
-            this.putAll(mapOf(
-                    "width" to width,
-                    "height" to height,
-                    "frameRate" to frameRate,
-                    "durationMs" to durationMs,
-                    "numTracks" to numTracks.toInt(),
-                    "mimeType" to mimeType
-            ))
-        }
-
-    }
 
     companion object {
         private const val TAG = "VideoUtils"
