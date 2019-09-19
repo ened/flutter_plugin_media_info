@@ -1,3 +1,8 @@
+## 0.4.1
+
+* Updates AGP to latest
+* Bump Glide dependency for Android
+
 ## 0.4.0
 
 * Replace Kotlin with Java 
