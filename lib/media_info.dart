@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 
 /// Media information & basic thumbnail creation methods.
@@ -10,7 +11,7 @@ class MediaInfo {
   /// Utilizes platform methods (which may include a combination of HW and SW
   /// decoders) to analyze the media file at a given path.
   ///
-  /// This will return *null* if the media file is invalid.
+  /// This method will return a standard [FlutterError] if the decoding failed.
   ///
   /// Valid media files will generate a dictionary with relevant fields set.
   /// For video files, this includes:
@@ -20,10 +21,8 @@ class MediaInfo {
   /// - durationMs (long)
   /// - numTracks (int)
   /// - mimeType (String)
-  Future<Map<String, dynamic>> getMediaInfo(String path) async {
-    final dynamic version = await _channel.invokeMethod('getMediaInfo', path);
-
-    return Map<String, dynamic>.from(version);
+  Future<Map<String, dynamic>> getMediaInfo(String path) {
+    return _channel.invokeMapMethod<String, dynamic>('getMediaInfo', path);
   }
 
   /// Generate a thumbnail for a video or image file.
@@ -40,7 +39,7 @@ class MediaInfo {
     /// Absolute source file path, without the file:// scheme prepended.
     String path,
 
-    /// Absolte target file path, without the file:// scheme prepended.
+    /// Absolute target file path, without the file:// scheme prepended.
     String target,
 
     /// Target width.
@@ -49,15 +48,12 @@ class MediaInfo {
     /// Target height.
     /// TODO: Consider to remove the field or specify the fit/crop ratio better.
     int height,
-  ) async {
-    final dynamic successful =
-        await _channel.invokeMethod('generateThumbnail', <String, dynamic>{
+  ) {
+    return _channel.invokeMethod<String>('generateThumbnail', <String, dynamic>{
       'path': path,
       'target': target,
       'width': width,
       'height': height,
     });
-
-    return successful;
   }
 }
