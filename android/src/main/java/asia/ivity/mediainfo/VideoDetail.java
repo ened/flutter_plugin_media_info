@@ -11,8 +11,8 @@ class VideoDetail {
   private final short numTracks;
   private final String mimeType;
 
-  VideoDetail(int width, int height, float frameRate, long durationMs, short numTracks,
-      String mimeType) {
+  VideoDetail(
+      int width, int height, float frameRate, long durationMs, short numTracks, String mimeType) {
     this.width = width;
     this.height = height;
     this.frameRate = frameRate;

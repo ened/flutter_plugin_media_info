@@ -4,16 +4,18 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import io.flutter.plugin.common.MethodCall;
-import io.flutter.plugin.common.MethodChannel;
-import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
-import io.flutter.plugin.common.MethodChannel.Result;
-import io.flutter.plugin.common.PluginRegistry.Registrar;
+
 import java.io.File;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import io.flutter.plugin.common.MethodCall;
+import io.flutter.plugin.common.MethodChannel;
+import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
+import io.flutter.plugin.common.MethodChannel.Result;
+import io.flutter.plugin.common.PluginRegistry.Registrar;
 
 public class MediaInfoPlugin implements MethodCallHandler {
 
@@ -21,8 +23,8 @@ public class MediaInfoPlugin implements MethodCallHandler {
   private static final String TAG = "MediaInfoPlugin";
 
   public static void registerWith(Registrar registrar) {
-    final MethodChannel channel = new MethodChannel(registrar.messenger(),
-        NAMESPACE + "/media_info");
+    final MethodChannel channel =
+        new MethodChannel(registrar.messenger(), NAMESPACE + "/media_info");
     channel.setMethodCallHandler(new MediaInfoPlugin(registrar.context()));
   }
 
@@ -55,7 +57,6 @@ public class MediaInfoPlugin implements MethodCallHandler {
     }
   }
 
-
   private void handleMediaInfo(String path, Result result) {
     VideoDetail info = VideoUtils.readVideoDetail(new File(path));
 
@@ -66,36 +67,38 @@ public class MediaInfoPlugin implements MethodCallHandler {
     }
   }
 
-  private void handleThumbnail(HashMap args, Result result, Context context,
-      Handler mainThreadHandler) {
-    thumbnailExecutor.submit(() -> {
-      final File target = new File((String) args.get("target"));
+  private void handleThumbnail(
+      HashMap args, Result result, Context context, Handler mainThreadHandler) {
+    thumbnailExecutor.submit(
+        () -> {
+          final File target = new File((String) args.get("target"));
 
-      if (target.exists()) {
-        Log.e(TAG, "Target $target file already exists.");
-        mainThreadHandler.post(() -> result.error("MediaInfo", "FileOverwriteDenied", null));
-        return;
-      }
+          if (target.exists()) {
+            Log.e(TAG, "Target $target file already exists.");
+            mainThreadHandler.post(() -> result.error("MediaInfo", "FileOverwriteDenied", null));
+            return;
+          }
 
-      if (context == null) {
-        Log.e(TAG, "Context disappeared");
-        mainThreadHandler.post(() -> result.error("MediaInfo", "ContextDisappeared", null));
+          if (context == null) {
+            Log.e(TAG, "Context disappeared");
+            mainThreadHandler.post(() -> result.error("MediaInfo", "ContextDisappeared", null));
 
-        return;
-      }
+            return;
+          }
 
-      File file = ThumbnailUtils.generateVideoThumbnail(context,
-          Objects.requireNonNull((String) args.get("path")),
-          Objects.<Integer>requireNonNull((Integer) args.get("width")),
-          Objects.<Integer>requireNonNull((Integer) args.get("height"))
-      );
+          File file =
+              ThumbnailUtils.generateVideoThumbnail(
+                  context,
+                  Objects.requireNonNull((String) args.get("path")),
+                  Objects.<Integer>requireNonNull((Integer) args.get("width")),
+                  Objects.<Integer>requireNonNull((Integer) args.get("height")));
 
-      if (file != null && file.renameTo(target)) {
-        mainThreadHandler.post(() -> result.success(target.getAbsolutePath()));
-      } else {
-        Log.e(TAG, "File does not generate or does not exist: " + file);
-        mainThreadHandler.post(() -> result.error("MediaInfo", "FileCreationFailed", null));
-      }
-    });
+          if (file != null && file.renameTo(target)) {
+            mainThreadHandler.post(() -> result.success(target.getAbsolutePath()));
+          } else {
+            Log.e(TAG, "File does not generate or does not exist: " + file);
+            mainThreadHandler.post(() -> result.error("MediaInfo", "FileCreationFailed", null));
+          }
+        });
   }
 }

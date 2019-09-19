@@ -5,6 +5,7 @@ import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.os.Build;
 import android.util.Log;
+
 import java.io.File;
 
 class VideoUtils {
@@ -17,15 +18,17 @@ class VideoUtils {
       final MediaMetadataRetriever retriever = new MediaMetadataRetriever();
       retriever.setDataSource(file.getAbsolutePath());
 
-      final int width = Integer
-          .parseInt(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
-      final int height = Integer
-          .parseInt(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
+      final int width =
+          Integer.parseInt(
+              retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
+      final int height =
+          Integer.parseInt(
+              retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
 
       float frameRate;
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        final String str = retriever
-            .extractMetadata(MediaMetadataRetriever.METADATA_KEY_CAPTURE_FRAMERATE);
+        final String str =
+            retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CAPTURE_FRAMERATE);
 
         try {
           frameRate = Float.parseFloat(str);
@@ -36,14 +39,15 @@ class VideoUtils {
       } else {
         frameRate = readFrameRateUsingExtractor(file);
       }
-      final long durationMs = Long
-          .parseLong(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
+      final long durationMs =
+          Long.parseLong(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
 
-      final short numTracks = Short
-          .parseShort(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_NUM_TRACKS));
+      final short numTracks =
+          Short.parseShort(
+              retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_NUM_TRACKS));
 
-      final String mimeType = retriever
-          .extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE);
+      final String mimeType =
+          retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE);
 
       return new VideoDetail(width, height, frameRate, durationMs, numTracks, mimeType);
 
@@ -53,12 +57,11 @@ class VideoUtils {
     }
   }
 
-
   private static float readFrameRateUsingExtractor(File file) {
     final MediaExtractor extractor = new MediaExtractor();
-    int frameRate = 30; //may be default
+    int frameRate = 30; // may be default
     try {
-      //Adjust data source as per the requirement if file, URI, etc.
+      // Adjust data source as per the requirement if file, URI, etc.
       extractor.setDataSource(file.getAbsolutePath());
       final int numTracks = extractor.getTrackCount();
 
@@ -75,12 +78,10 @@ class VideoUtils {
     } catch (Throwable e) {
       Log.e(TAG, file.getAbsolutePath(), e);
     } finally {
-      //Release stuff
+      // Release stuff
       extractor.release();
     }
 
     return frameRate;
   }
-
-
 }
