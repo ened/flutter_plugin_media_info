@@ -5,6 +5,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import java.io.File;
 import java.util.HashMap;
 import java.util.Objects;
@@ -38,7 +40,7 @@ public class MediaInfoPlugin implements MethodCallHandler {
   }
 
   @Override
-  public void onMethodCall(MethodCall call, Result result) {
+  public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
     if (thumbnailExecutor == null) {
       thumbnailExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     }
