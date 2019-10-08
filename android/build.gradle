@@ -43,4 +43,6 @@ repositories {
 }
 dependencies {
     implementation 'com.github.bumptech.glide:glide:4.10.0'
+    implementation 'com.google.android.exoplayer:exoplayer-core:2.10.5'
+    implementation 'net.sourceforge.streamsupport:android-retrofuture:1.7.0'
 }
