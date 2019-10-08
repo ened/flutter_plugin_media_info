@@ -1,3 +1,8 @@
+## 0.5.0
+
+* Android: Switch Metadata retrieval from MediaStore methods to ExoPlayer
+* Android: Bump AGP & Gradle 
+
 ## 0.4.1
 
 * Updates AGP to latest
