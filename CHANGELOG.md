@@ -1,3 +1,8 @@
+## 0.5.1
+
+* Android: Ensure underlying ExoPlayer instance is reused & run on a single thread
+  for all operations.
+
 ## 0.5.0
 
 * Android: Switch Metadata retrieval from MediaStore methods to ExoPlayer
