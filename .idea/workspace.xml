@@ -1,18 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="7c4a6a86-43f0-4d13-acfe-b595f12157da" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/android/src/main/java/asia/ivity/mediainfo/util/OutputSurface.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/android/src/main/java/asia/ivity/mediainfo/util/TextureRender.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Flutter_Plugins.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/libraries/Flutter_Plugins.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CHANGELOG.md" beforeDir="false" afterPath="$PROJECT_DIR$/CHANGELOG.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/android/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/src/main/java/asia/ivity/mediainfo/MediaInfoPlugin.java" beforeDir="false" afterPath="$PROJECT_DIR$/android/src/main/java/asia/ivity/mediainfo/MediaInfoPlugin.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/example/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/example/lib/main.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.yaml" afterDir="false" />
-    </list>
+    <list default="true" id="7c4a6a86-43f0-4d13-acfe-b595f12157da" name="Default Changelist" comment="Android: Replace" />
     <ignored path="$PROJECT_DIR$/.dart_tool/" />
     <ignored path="$PROJECT_DIR$/.idea/" />
     <ignored path="$PROJECT_DIR$/.pub/" />
@@ -50,7 +39,7 @@
         <entry file="file://$PROJECT_DIR$/example/lib/main.dart">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="809">
-              <caret line="168" lean-forward="true" selection-start-line="168" selection-end-line="168" />
+              <caret line="168" selection-start-line="168" selection-end-line="168" />
             </state>
           </provider>
         </entry>
@@ -181,12 +170,18 @@
       <option name="project" value="LOCAL" />
       <updated>1568894068534</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Replace MediaStore metadata &amp; thumbnail methods with ExoPlayer">
+      <created>1570552775744</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1570552775744</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="25" width="2559" height="1400" extended-state="0" />
-    <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.24970692" />
       <window_info id="Captures" order="1" side_tool="true" />
@@ -208,7 +203,7 @@
       <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" />
       <window_info anchor="bottom" id="Flutter Performance" order="8" side_tool="true" />
       <window_info active="true" anchor="bottom" id="Version Control" order="9" visible="true" weight="0.32806623" />
-      <window_info anchor="bottom" id="Messages" order="10" weight="0.3295107" />
+      <window_info anchor="bottom" id="Messages" order="10" weight="0.32881865" />
       <window_info anchor="right" id="Device File Explorer" order="0" side_tool="true" />
       <window_info anchor="right" id="Capture Analysis" order="1" />
       <window_info anchor="right" id="Theme Preview" order="2" />
@@ -220,7 +215,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Update documentation &amp; modernize the Flutter API calls." />
     <MESSAGE value="Update IDE files" />
-    <option name="LAST_COMMIT_MESSAGE" value="Update IDE files" />
+    <MESSAGE value="Replace MediaStore metadata &amp; thumbnail methods with ExoPlayer" />
+    <option name="LAST_COMMIT_MESSAGE" value="Replace MediaStore metadata &amp; thumbnail methods with ExoPlayer" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/lib/media_info.dart">
@@ -240,7 +236,7 @@
     <entry file="file://$PROJECT_DIR$/example/lib/main.dart">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="809">
-          <caret line="168" lean-forward="true" selection-start-line="168" selection-end-line="168" />
+          <caret line="168" selection-start-line="168" selection-end-line="168" />
         </state>
       </provider>
     </entry>
