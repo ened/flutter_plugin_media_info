@@ -51,7 +51,8 @@ public class MediaInfoPlugin implements MethodCallHandler {
     channel.setMethodCallHandler(new MediaInfoPlugin(registrar.context()));
   }
 
-  private ExecutorService thumbnailExecutor;
+  private ExecutorService executorService;
+
   private Handler mainThreadHandler;
 
   private final Context context;
@@ -60,14 +61,15 @@ public class MediaInfoPlugin implements MethodCallHandler {
     this.context = context;
   }
 
+  private SimpleExoPlayer exoPlayer;
+
   @Override
   public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
-    if (thumbnailExecutor == null) {
+    if (executorService == null) {
       if (USE_EXOPLAYER) {
-        thumbnailExecutor = Executors.newSingleThreadExecutor();
+        executorService = Executors.newSingleThreadExecutor();
       } else {
-        thumbnailExecutor =
-            Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
       }
     }
 
@@ -93,35 +95,60 @@ public class MediaInfoPlugin implements MethodCallHandler {
 
   private void handleMediaInfo(Context context, String path, Result result) {
     if (USE_EXOPLAYER) {
-      handleMediaInfoExoPlayer(context, path, result);
+      CompletableFuture<VideoDetail> future = new CompletableFuture<>();
+
+      executorService.execute(
+          () -> {
+            mainThreadHandler.post(() -> handleMediaInfoExoPlayer(context, path, future));
+
+            try {
+              VideoDetail info = future.get();
+              mainThreadHandler.post(
+                  () -> {
+                    if (info != null) {
+                      result.success(info.toMap());
+                    } else {
+                      result.error("MediaInfo", "InvalidFile", null);
+                    }
+                  });
+
+            } catch (InterruptedException e) {
+              mainThreadHandler.post(() -> result.error("MediaInfo", e.getMessage(), null));
+            } catch (ExecutionException e) {
+              mainThreadHandler.post(
+                  () -> result.error("MediaInfo", e.getCause().getMessage(), null));
+            }
+          });
     } else {
-      handleMediaInfoMediaStore(path, result);
+      executorService.execute(
+          () -> {
+            final VideoDetail info = handleMediaInfoMediaStore(path);
+
+            mainThreadHandler.post(
+                () -> {
+                  if (info != null) {
+                    result.success(info.toMap());
+                  } else {
+                    result.error("MediaInfo", "InvalidFile", null);
+                  }
+                });
+          });
     }
   }
 
-  private void handleMediaInfoExoPlayer(Context context, String path, Result result) {
-    DefaultTrackSelector selector = new DefaultTrackSelector();
-    SimpleExoPlayer exoPlayer = ExoPlayerFactory.newSimpleInstance(context, selector);
+  private void handleMediaInfoExoPlayer(
+      Context context, String path, CompletableFuture<VideoDetail> future) {
+    ensureExoPlayer();
+    exoPlayer.clearVideoSurface();
 
-    int indexOfAudioRenderer = -1;
-    for (int i = 0; i < exoPlayer.getRendererCount(); i++) {
-      if (exoPlayer.getRendererType(i) == C.TRACK_TYPE_AUDIO) {
-        indexOfAudioRenderer = i;
-        break;
-      }
-    }
-
-    selector.setRendererDisabled(indexOfAudioRenderer, true);
-
-    exoPlayer.setPlayWhenReady(false);
-    exoPlayer.addListener(
+    final EventListener listener =
         new EventListener() {
           @Override
           public void onTracksChanged(
               TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
 
             if (trackSelections.length == 0 || trackSelections.get(0) == null) {
-              result.error("MediaInfo", "TracksUnreadable", null);
+              future.completeExceptionally(new IOException("TracksUnreadable"));
               return;
             }
 
@@ -135,18 +162,24 @@ public class MediaInfoPlugin implements MethodCallHandler {
                     exoPlayer.getDuration(),
                     (short) trackGroups.length,
                     format.sampleMimeType);
-            result.success(info.toMap());
-            Log.d(TAG, "releASE!!");
-            exoPlayer.release();
+            //            exoPlayer.release();
+            future.complete(info);
           }
 
           @Override
           public void onPlayerError(ExoPlaybackException error) {
             Log.e(TAG, "Player Error for this file", error);
-            result.error("MediaInfo", "TracksUnreadable", null);
-            exoPlayer.release();
+            future.completeExceptionally(error);
+            //            exoPlayer.release();
           }
-        });
+        };
+
+
+
+    exoPlayer.addListener(listener);
+
+    future.whenComplete((videoDetail, throwable) -> exoPlayer.removeListener(listener));
+
     DataSource.Factory dataSourceFactory =
         new DefaultDataSourceFactory(context, Util.getUserAgent(context, "media_info"));
     exoPlayer.prepare(
@@ -154,14 +187,31 @@ public class MediaInfoPlugin implements MethodCallHandler {
             .createMediaSource(Uri.fromFile(new File(path))));
   }
 
-  private void handleMediaInfoMediaStore(String path, Result result) {
-    VideoDetail info = VideoUtils.readVideoDetail(new File(path));
-
-    if (info != null) {
-      result.success(info.toMap());
-    } else {
-      result.error("MediaInfo", "InvalidFile", null);
+  private synchronized void ensureExoPlayer() {
+    if (exoPlayer != null) {
+      exoPlayer.stop(true);
+      return;
     }
+
+    DefaultTrackSelector selector = new DefaultTrackSelector();
+    exoPlayer = ExoPlayerFactory.newSimpleInstance(context, selector);
+
+    int indexOfAudioRenderer = -1;
+    for (int i = 0; i < exoPlayer.getRendererCount(); i++) {
+      if (exoPlayer.getRendererType(i) == C.TRACK_TYPE_AUDIO) {
+        indexOfAudioRenderer = i;
+        break;
+      }
+    }
+
+    selector.setRendererDisabled(indexOfAudioRenderer, true);
+
+    exoPlayer.setPlayWhenReady(false);
+    exoPlayer.stop(true);
+  }
+
+  private VideoDetail handleMediaInfoMediaStore(String path) {
+    return VideoUtils.readVideoDetail(new File(path));
   }
 
   OutputSurface surface;
@@ -177,7 +227,7 @@ public class MediaInfoPlugin implements MethodCallHandler {
 
     final File target = new File(targetPath);
 
-    thumbnailExecutor.submit(
+    executorService.submit(
         () -> {
           if (target.exists()) {
             Log.e(TAG, "Target $target file already exists.");
@@ -221,39 +271,22 @@ public class MediaInfoPlugin implements MethodCallHandler {
       int height,
       File target,
       CompletableFuture<String> future) {
-
     Log.d(TAG, "Start decoding: " + path + ", in res: " + width + " x " + height);
 
-    DefaultTrackSelector selector = new DefaultTrackSelector();
-    SimpleExoPlayer exoPlayer = ExoPlayerFactory.newSimpleInstance(context, selector);
-    exoPlayer.setPlayWhenReady(false);
-
-    int indexOfAudioRenderer = -1;
-    for (int i = 0; i < exoPlayer.getRendererCount(); i++) {
-      if (exoPlayer.getRendererType(i) == C.TRACK_TYPE_AUDIO) {
-        indexOfAudioRenderer = i;
-        break;
-      }
-    }
-
-    selector.setRendererDisabled(indexOfAudioRenderer, true);
-
-    surface = new OutputSurface(width, height);
-
-    exoPlayer.setVideoSurface(surface.getSurface());
-    exoPlayer.seekTo(1);
+    ensureExoPlayer();
+    ensureSurface(width, height);
 
     final AtomicBoolean renderedFirstFrame = new AtomicBoolean(false);
 
-    exoPlayer.addVideoListener(
+    final VideoListener videoListener =
         new VideoListener() {
           @Override
           public void onRenderedFirstFrame() {
             renderedFirstFrame.set(true);
           }
-        });
+        };
 
-    exoPlayer.addListener(
+    EventListener eventListener =
         new EventListener() {
           @Override
           public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
@@ -264,7 +297,7 @@ public class MediaInfoPlugin implements MethodCallHandler {
                 } catch (Exception e) {
                   //
                 }
-                exoPlayer.release();
+                //                exoPlayer.release();
 
                 surface.drawImage();
 
@@ -272,10 +305,10 @@ public class MediaInfoPlugin implements MethodCallHandler {
                   final Bitmap bitmap = surface.saveFrame();
                   bitmap.compress(CompressFormat.JPEG, 90, new FileOutputStream(target));
                   mainThreadHandler.post(() -> future.complete(target.getAbsolutePath()));
-                  exoPlayer.release();
+                  //                  exoPlayer.release();
                 } catch (IOException e) {
                   Log.e(TAG, "File not found", e);
-                  exoPlayer.release();
+                  //                  exoPlayer.release();
                   future.completeExceptionally(e);
                 }
               }
@@ -285,9 +318,18 @@ public class MediaInfoPlugin implements MethodCallHandler {
           @Override
           public void onPlayerError(ExoPlaybackException error) {
             Log.e(TAG, "Player Error for this file", error);
-            exoPlayer.release();
+            //            exoPlayer.release();
             future.completeExceptionally(error);
           }
+        };
+
+    exoPlayer.addVideoListener(videoListener);
+    exoPlayer.addListener(eventListener);
+
+    future.whenComplete(
+        (s, throwable) -> {
+          exoPlayer.removeVideoListener(videoListener);
+          exoPlayer.removeListener(eventListener);
         });
 
     DataSource.Factory dataSourceFactory =
@@ -295,6 +337,14 @@ public class MediaInfoPlugin implements MethodCallHandler {
     exoPlayer.prepare(
         new ProgressiveMediaSource.Factory(dataSourceFactory)
             .createMediaSource(Uri.fromFile(new File(path))));
+  }
+
+  private void ensureSurface(int width, int height) {
+    if (surface == null || surface.getWidth() != width || surface.getHeight() != height) {
+      surface = new OutputSurface(width, height);
+    }
+
+    exoPlayer.setVideoSurface(surface.getSurface());
   }
 
   private void handleThumbnailMediaStore(

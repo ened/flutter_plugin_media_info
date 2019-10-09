@@ -68,6 +68,15 @@ public class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
         makeCurrent();
         setup();
     }
+
+    public int getWidth() {
+        return mWidth;
+    }
+
+    public int getHeight() {
+        return mHeight;
+    }
+
     /**
      * Creates an OutputSurface using the current EGL context.  Creates a Surface that can be
      * passed to MediaCodec.configure().
