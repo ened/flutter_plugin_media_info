@@ -1,11 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
-
-import 'package:media_info/media_info.dart';
-
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:media_info/media_info.dart';
 import 'package:path_provider/path_provider.dart';
 
 void main() => runApp(MyApp());
@@ -20,7 +18,6 @@ class Resolution {
 
   final int w;
   final int h;
-
 }
 
 const List<Resolution> _resolutions = [
@@ -37,17 +34,6 @@ const List<Resolution> _resolutions = [
   Resolution(1664, 936),
   Resolution(1792, 1008),
   Resolution(1920, 1080),
-//  Resolution(320, 180),
-//  Resolution(480, 288),
-//  Resolution(640, 360),
-//  Resolution(848, 1200),
-//  Resolution(960, 1200),
-//  Resolution(1024, 1200),
-//  Resolution(1200, 1200),
-//  Resolution(1280, 1200),
-//  Resolution(1440, 1200),
-//  Resolution(1600, 1200),
-//  Resolution(1920, 1200),
 ];
 
 class _MyAppState extends State<MyApp> {
@@ -170,21 +156,18 @@ class _MyAppState extends State<MyApp> {
         final String mime = mediaInfo['mimeType'];
         if (mime.startsWith("video/")) {
           Set<Resolution> resolutions = Set();
-//          resolutions.addAll(_resolutions);
+          resolutions.addAll(_resolutions);
           resolutions.add(Resolution(w, h));
 
-
           for (final Resolution res in resolutions) {
-//            final double ratio = w / width;
-
             final String target =
                 File('${cacheDir.path}/$cacheName.${res.w}').path;
             if (File(target).existsSync()) {
               File(target).deleteSync();
             }
 
-            _thumbnails['${res.w}x${res.h}'] = _mediaInfo.generateThumbnail(
-                _file, target, res.w, res.h);
+            _thumbnails['${res.w}x${res.h}'] =
+                _mediaInfo.generateThumbnail(_file, target, res.w, res.h);
           }
         }
 
