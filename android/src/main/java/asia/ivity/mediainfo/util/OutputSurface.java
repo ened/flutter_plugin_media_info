@@ -47,6 +47,12 @@ public class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
 
     final int mWidth, mHeight;
 
+    public void setFrameFinished(Runnable frameFinished) {
+        this.frameFinished = frameFinished;
+    }
+
+    Runnable frameFinished;
+
     /**
      * Creates an OutputSurface backed by a pbuffer with the specifed dimensions.  The new
      * EGL context and surface will be made current.  Creates a Surface that can be passed
@@ -247,6 +253,7 @@ public class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
     public void drawImage() {
         mTextureRender.drawFrame(mSurfaceTexture);
     }
+
     @Override
     public void onFrameAvailable(SurfaceTexture st) {
         if (VERBOSE) Log.d(TAG, "new frame available");
@@ -256,6 +263,11 @@ public class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
             }
             mFrameAvailable = true;
             mFrameSyncObject.notifyAll();
+        }
+
+        if(frameFinished != null) {
+            frameFinished.run();
+            frameFinished = null;
         }
     }
 
