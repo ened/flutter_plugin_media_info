@@ -1,3 +1,7 @@
+## 0.5.2
+
+* Android: Optimize the logic when a ExoPlayer frame is actually ready.
+
 ## 0.5.1
 
 * Android: Ensure underlying ExoPlayer instance is reused & run on a single thread
