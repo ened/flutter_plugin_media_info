@@ -18,12 +18,20 @@ class VideoUtils {
       final MediaMetadataRetriever retriever = new MediaMetadataRetriever();
       retriever.setDataSource(file.getAbsolutePath());
 
-      final int width =
+      int width =
           Integer.parseInt(
               retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
-      final int height =
+      int height =
           Integer.parseInt(
               retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
+      int rotation = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION));
+
+      // Switch the width/height if video was taken in portrait mode
+      if (rotation == 90 || rotation == 270) {
+        int temp = width;
+        width = height;
+        height = temp;
+      }
 
       float frameRate;
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

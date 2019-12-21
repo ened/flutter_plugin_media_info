@@ -3,6 +3,7 @@
 #import <AVFoundation/AVFoundation.h>
 #import <ImageIO/ImageIO.h>
 #import <MobileCoreServices/MobileCoreServices.h>
+#import <GLKit/GLKit.h>
 
 @interface MediaInfoPlugin ()
 - (void)handleGetMediaInfo:(id)arguments withResult:(FlutterResult)result;
@@ -48,10 +49,20 @@
     
     if ([tracks count] > 0) {
       AVAssetTrack *track = [tracks objectAtIndex:0];
-      
-      [d setValue:[NSNumber numberWithInteger:(NSInteger) track.naturalSize.width]
+
+      NSInteger width = track.naturalSize.width;
+      NSInteger height = track.naturalSize.height;
+      // Rotate the video by using a videoComposition and the preferredTransform
+      CGAffineTransform _preferredTransform = [self fixTransform:track];
+      NSInteger rotationDegrees = (NSInteger)round(radiansToDegrees(atan2(_preferredTransform.b, _preferredTransform.a)));
+      if (rotationDegrees == 90 || rotationDegrees == 270) {
+          width = track.naturalSize.height;
+          height = track.naturalSize.width;
+      }
+
+      [d setValue:[NSNumber numberWithInteger:width]
            forKey:@"width"];
-      [d setValue:[NSNumber numberWithInteger:(NSInteger) track.naturalSize.height]
+      [d setValue:[NSNumber numberWithInteger:height]
            forKey:@"height"];
       [d setValue:[NSNumber numberWithFloat:track.nominalFrameRate]
            forKey:@"frameRate"];
@@ -143,6 +154,40 @@
   }
   
   return CFBridgingRelease(mimeType);
+}
+
+static inline CGFloat radiansToDegrees(CGFloat radians) {
+    // Input range [-pi, pi] or [-180, 180]
+    CGFloat degrees = GLKMathRadiansToDegrees(radians);
+    if (degrees < 0) {
+        // Convert -90 to 270 and -180 to 180
+        return degrees + 360;
+    }
+    // Output degrees in between [0, 360[
+    return degrees;
+};
+
+- (CGAffineTransform)fixTransform:(AVAssetTrack*)videoTrack {
+    CGAffineTransform transform = videoTrack.preferredTransform;
+    // TODO(@recastrodiaz): why do we need to do this? Why is the preferredTransform incorrect?
+    // At least 2 user videos show a black screen when in portrait mode if we directly use the
+    // videoTrack.preferredTransform Setting tx to the height of the video instead of 0, properly
+    // displays the video https://github.com/flutter/flutter/issues/17606#issuecomment-413473181
+    if (transform.tx == 0 && transform.ty == 0) {
+        NSInteger rotationDegrees = (NSInteger)round(radiansToDegrees(atan2(transform.b, transform.a)));
+        NSLog(@"TX and TY are 0. Rotation: %ld. Natural width,height: %f, %f", rotationDegrees,
+              videoTrack.naturalSize.width, videoTrack.naturalSize.height);
+        if (rotationDegrees == 90) {
+            NSLog(@"Setting transform tx");
+            transform.tx = videoTrack.naturalSize.height;
+            transform.ty = 0;
+        } else if (rotationDegrees == 270) {
+            NSLog(@"Setting transform ty");
+            transform.tx = 0;
+            transform.ty = videoTrack.naturalSize.width;
+        }
+    }
+    return transform;
 }
 
 @end
