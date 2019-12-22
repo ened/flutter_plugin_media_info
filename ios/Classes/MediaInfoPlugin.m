@@ -17,10 +17,6 @@
                                                               binaryMessenger:[registrar messenger]];
   MediaInfoPlugin* instance = [[MediaInfoPlugin alloc] init];
   [registrar addMethodCallDelegate:instance channel:channel];
-  
-  NSURL *u= [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] firstObject];
-  
-  NSLog(@"documents: %@", u);
 }
 
 - (void)handleMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result {
@@ -175,14 +171,10 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
     // displays the video https://github.com/flutter/flutter/issues/17606#issuecomment-413473181
     if (transform.tx == 0 && transform.ty == 0) {
         NSInteger rotationDegrees = (NSInteger)round(radiansToDegrees(atan2(transform.b, transform.a)));
-        NSLog(@"TX and TY are 0. Rotation: %ld. Natural width,height: %f, %f", rotationDegrees,
-              videoTrack.naturalSize.width, videoTrack.naturalSize.height);
         if (rotationDegrees == 90) {
-            NSLog(@"Setting transform tx");
             transform.tx = videoTrack.naturalSize.height;
             transform.ty = 0;
         } else if (rotationDegrees == 270) {
-            NSLog(@"Setting transform ty");
             transform.tx = 0;
             transform.ty = videoTrack.naturalSize.width;
         }
