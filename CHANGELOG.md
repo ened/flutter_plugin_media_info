@@ -1,3 +1,7 @@
+## next
+
+* iOS: Migrate iOS project
+
 ## 0.5.2
 
 * Android: Optimize the logic when a ExoPlayer frame is actually ready.
