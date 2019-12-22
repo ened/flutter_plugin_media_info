@@ -1,5 +1,6 @@
 ## next
 
+* Bump a few example dependency versions
 * iOS: Remove unused logging
 * iOS: Migrate iOS project
 * Adds basic method plugin tests on Dart side
