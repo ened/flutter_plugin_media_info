@@ -1,12 +1,28 @@
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// Media information & basic thumbnail creation methods.
 class MediaInfo {
-  static const MethodChannel _channel =
-      MethodChannel('asia.ivity.flutter/media_info');
+  /// Initializes the plugin and starts listening for potential platform events.
+  factory MediaInfo() {
+    if (_instance == null) {
+      final MethodChannel methodChannel =
+          const MethodChannel('asia.ivity.flutter/media_info');
+      _instance = MediaInfo.private(methodChannel);
+    }
+    return _instance;
+  }
+
+  /// This constructor is only used for testing and shouldn't be accessed by
+  /// users of the plugin. It may break or change at any time.
+  @visibleForTesting
+  MediaInfo.private(this._methodChannel);
+
+  static MediaInfo _instance;
+
+  final MethodChannel _methodChannel;
 
   /// Utilizes platform methods (which may include a combination of HW and SW
   /// decoders) to analyze the media file at a given path.
@@ -22,7 +38,10 @@ class MediaInfo {
   /// - numTracks (int)
   /// - mimeType (String)
   Future<Map<String, dynamic>> getMediaInfo(String path) {
-    return _channel.invokeMapMethod<String, dynamic>('getMediaInfo', path);
+    return _methodChannel.invokeMapMethod<String, dynamic>(
+      'getMediaInfo',
+      path,
+    );
   }
 
   /// Generate a thumbnail for a video or image file.
@@ -49,11 +68,14 @@ class MediaInfo {
     /// TODO: Consider to remove the field or specify the fit/crop ratio better.
     int height,
   ) {
-    return _channel.invokeMethod<String>('generateThumbnail', <String, dynamic>{
-      'path': path,
-      'target': target,
-      'width': width,
-      'height': height,
-    });
+    return _methodChannel.invokeMethod<String>(
+      'generateThumbnail',
+      <String, dynamic>{
+        'path': path,
+        'target': target,
+        'width': width,
+        'height': height,
+      },
+    );
   }
 }
