@@ -1,5 +1,6 @@
 ## next
 
+* Support the v2 Android embedder.
 * Bump a few example dependency versions
 * iOS: Remove unused logging
 * iOS: Migrate iOS project

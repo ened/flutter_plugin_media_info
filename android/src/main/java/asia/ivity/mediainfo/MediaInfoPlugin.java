@@ -22,6 +22,8 @@ import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
+import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
@@ -37,28 +39,44 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java9.util.concurrent.CompletableFuture;
 
-public class MediaInfoPlugin implements MethodCallHandler {
+public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
 
   private static final String NAMESPACE = "asia.ivity.flutter";
   private static final String TAG = "MediaInfoPlugin";
 
   private static final boolean USE_EXOPLAYER = true;
 
+  private Context applicationContext;
+  private MethodChannel methodChannel;
+
   public static void registerWith(Registrar registrar) {
-    final MethodChannel channel =
-        new MethodChannel(registrar.messenger(), NAMESPACE + "/media_info");
-    channel.setMethodCallHandler(new MediaInfoPlugin(registrar.context()));
+    final MediaInfoPlugin instance = new MediaInfoPlugin();
+    instance.onAttachedToEngine(registrar.context(), registrar.messenger());
   }
+
+  @Override
+  public void onAttachedToEngine(FlutterPluginBinding binding) {
+    onAttachedToEngine(binding.getApplicationContext(), binding.getBinaryMessenger());
+  }
+
+  private void onAttachedToEngine(Context applicationContext, BinaryMessenger messenger) {
+    this.applicationContext = applicationContext;
+    methodChannel = new MethodChannel(messenger, NAMESPACE + "/media_info");
+    methodChannel.setMethodCallHandler(this);
+  }
+
+  @Override
+  public void onDetachedFromEngine(FlutterPluginBinding binding) {
+    applicationContext = null;
+    methodChannel.setMethodCallHandler(null);
+    methodChannel = null;
+  }
+
 
   private ThreadPoolExecutor executorService;
 
   private Handler mainThreadHandler;
 
-  private final Context context;
-
-  private MediaInfoPlugin(Context context) {
-    this.context = context;
-  }
 
   private SimpleExoPlayer exoPlayer;
 
@@ -82,10 +100,10 @@ public class MediaInfoPlugin implements MethodCallHandler {
     if (call.method.equalsIgnoreCase("getMediaInfo")) {
       String path = (String) call.arguments;
 
-      handleMediaInfo(context, path, result);
+      handleMediaInfo(applicationContext, path, result);
     } else if (call.method.equalsIgnoreCase("generateThumbnail")) {
       handleThumbnail(
-          context,
+          applicationContext,
           call.argument("path"),
           call.argument("target"),
           call.argument("width"),
@@ -214,7 +232,7 @@ public class MediaInfoPlugin implements MethodCallHandler {
     return VideoUtils.readVideoDetail(new File(path));
   }
 
-  OutputSurface surface;
+  private OutputSurface surface;
 
   private void handleThumbnail(
       Context context,
@@ -350,7 +368,7 @@ public class MediaInfoPlugin implements MethodCallHandler {
   private synchronized void ensureExoPlayer() {
     if (exoPlayer == null) {
       DefaultTrackSelector selector = new DefaultTrackSelector();
-      exoPlayer = ExoPlayerFactory.newSimpleInstance(context, selector);
+      exoPlayer = ExoPlayerFactory.newSimpleInstance(applicationContext, selector);
 
       int indexOfAudioRenderer = -1;
       for (int i = 0; i < exoPlayer.getRendererCount(); i++) {
@@ -408,4 +426,6 @@ public class MediaInfoPlugin implements MethodCallHandler {
       mainThreadHandler.post(() -> result.error("MediaInfo", "FileCreationFailed", null));
     }
   }
+
+
 }
