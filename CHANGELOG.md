@@ -1,4 +1,4 @@
-## next
+## 0.6.0
 
 * Update pubspec.yaml format
 * Android: Video rotation can not be detected on Android < 17
