@@ -164,10 +164,21 @@ public class MediaInfoPlugin implements MethodCallHandler {
 
             Format format = trackSelections.get(0).getSelectedFormat();
 
+            int width = format.width;
+            int height = format.height;
+            int rotation = format.rotationDegrees;
+
+            // Switch the width/height if video was taken in portrait mode
+            if (rotation == 90 || rotation == 270) {
+              int temp = width;
+              width = height;
+              height = temp;
+            }
+
             VideoDetail info =
                 new VideoDetail(
-                    format.width,
-                    format.height,
+                    width,
+                    height,
                     format.frameRate,
                     exoPlayer.getDuration(),
                     (short) trackGroups.length,
