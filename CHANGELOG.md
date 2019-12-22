@@ -1,7 +1,8 @@
 ## next
 
-* Android: Video rotation can not be detected on Android < 17.
-* Support the v2 Android embedder.
+* Update pubspec.yaml format
+* Android: Video rotation can not be detected on Android < 17
+* Support the v2 Android embedder
 * Bump a few example dependency versions
 * iOS: Remove unused logging
 * iOS: Migrate iOS project

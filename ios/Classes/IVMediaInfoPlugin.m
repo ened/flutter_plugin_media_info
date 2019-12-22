@@ -1,21 +1,21 @@
-#import "MediaInfoPlugin.h"
+#import "IVMediaInfoPlugin.h"
 
 #import <AVFoundation/AVFoundation.h>
 #import <ImageIO/ImageIO.h>
 #import <MobileCoreServices/MobileCoreServices.h>
 #import <GLKit/GLKit.h>
 
-@interface MediaInfoPlugin ()
+@interface IVMediaInfoPlugin ()
 - (void)handleGetMediaInfo:(id)arguments withResult:(FlutterResult)result;
 - (void)handleGenerateThumbnail:(id)arguments withResult:(FlutterResult)result;
 + (NSString*)mimeTypeForFileAtPath: (NSString *) path;
 @end
 
-@implementation MediaInfoPlugin
+@implementation IVMediaInfoPlugin
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
   FlutterMethodChannel* channel = [FlutterMethodChannel methodChannelWithName:@"asia.ivity.flutter/media_info"
                                                               binaryMessenger:[registrar messenger]];
-  MediaInfoPlugin* instance = [[MediaInfoPlugin alloc] init];
+  IVMediaInfoPlugin* instance = [[IVMediaInfoPlugin alloc] init];
   [registrar addMethodCallDelegate:instance channel:channel];
 }
 
@@ -34,7 +34,7 @@
   
   NSURL *mediaURL = [NSURL fileURLWithPath:arguments];
   
-  NSString *mime = [MediaInfoPlugin mimeTypeForFileAtPath:mediaURL.path];
+  NSString *mime = [IVMediaInfoPlugin mimeTypeForFileAtPath:mediaURL.path];
   
   [d setValue:mime
        forKey:@"mimeType"];
