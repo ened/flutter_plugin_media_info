@@ -7,6 +7,7 @@
 * iOS: Remove unused logging
 * iOS: Migrate iOS project
 * Adds basic method plugin tests on Dart side
+* Resolves width / height detection for portrait videos. Thank you @bdoubleu86
 
 ## 0.5.2
 
