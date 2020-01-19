@@ -16,3 +16,13 @@ Currently supported properties:
 * number of tracks
 
 Additionally, thumbnails can be generated.
+
+## Integration tests
+
+E2E tests are currently WIP.
+
+They can be tested in the example folder by running the following command:
+
+```
+$ flutter drive test_driver/media_info_e2e.dart
+```
