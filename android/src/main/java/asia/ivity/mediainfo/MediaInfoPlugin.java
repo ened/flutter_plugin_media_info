@@ -18,6 +18,7 @@ import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
+import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
@@ -66,17 +67,15 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
   }
 
   @Override
-  public void onDetachedFromEngine(FlutterPluginBinding binding) {
+  public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
     applicationContext = null;
     methodChannel.setMethodCallHandler(null);
     methodChannel = null;
   }
 
-
   private ThreadPoolExecutor executorService;
 
   private Handler mainThreadHandler;
-
 
   private SimpleExoPlayer exoPlayer;
 
@@ -102,12 +101,20 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
 
       handleMediaInfo(applicationContext, path, result);
     } else if (call.method.equalsIgnoreCase("generateThumbnail")) {
+      Integer width = call.argument("width");
+      Integer height = call.argument("height");
+
+      if (width == null || height == null) {
+        result.error("MediaInfo", "invalid-dimensions", null);
+        return;
+      }
+
       handleThumbnail(
           applicationContext,
           call.argument("path"),
           call.argument("target"),
-          call.argument("width"),
-          call.argument("height"),
+          width,
+          height,
           result,
           mainThreadHandler);
     }
@@ -175,12 +182,15 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
           public void onTracksChanged(
               TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
 
-            if (trackSelections.length == 0 || trackSelections.get(0) == null) {
+            TrackSelection selection;
+            if (trackSelections.length == 0
+                || (selection = trackSelections.get(0)) == null
+                || selection.getSelectedFormat() == null) {
               future.completeExceptionally(new IOException("TracksUnreadable"));
               return;
             }
 
-            Format format = trackSelections.get(0).getSelectedFormat();
+            final Format format = selection.getSelectedFormat();
 
             int width = format.width;
             int height = format.height;
@@ -378,7 +388,8 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
         }
       }
 
-      selector.setRendererDisabled(indexOfAudioRenderer, true);
+      selector.setParameters(
+          selector.getParameters().buildUpon().setRendererDisabled(indexOfAudioRenderer, true));
     }
 
     exoPlayer.setPlayWhenReady(false);
@@ -426,6 +437,4 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
       mainThreadHandler.post(() -> result.error("MediaInfo", "FileCreationFailed", null));
     }
   }
-
-
 }
