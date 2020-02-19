@@ -1,3 +1,8 @@
+## 0.6.1
+
+* Android: Removes logging in the main plugin
+* Android: Removes various unsafe/deprecated method calls
+
 ## 0.6.0
 
 * Update pubspec.yaml format
