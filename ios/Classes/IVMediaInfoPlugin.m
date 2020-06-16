@@ -71,6 +71,21 @@
       result([FlutterError errorWithCode:@"MediaInfo" message:@"InvalidVideo" details:nil]);
       return;
     }
+  } else if ([mime hasPrefix:@"audio/"]) {
+      AVURLAsset *asset = [AVURLAsset URLAssetWithURL:mediaURL options:nil];
+      NSArray *tracks = [asset tracksWithMediaType:AVMediaTypeVideo];
+      
+      if ([tracks count] > 0) {
+        AVAssetTrack *track = [tracks objectAtIndex:0];
+          
+      [d setValue:[NSNumber numberWithLong:CMTimeGetSeconds(track.timeRange.duration) * 1000]
+           forKey:@"durationMs"];
+
+      } else {
+        NSLog(@"[media_info] Can not read: %@", mediaURL);
+        result([FlutterError errorWithCode:@"MediaInfo" message:@"InvalidVideo" details:nil]);
+        return;
+      }
   } else if ([mime hasPrefix:@"image/"]) {
     CGImageSourceRef source = CGImageSourceCreateWithURL((CFURLRef)mediaURL, NULL);
     NSDictionary* imageHeader = (__bridge NSDictionary*) CGImageSourceCopyPropertiesAtIndex(source, 0, NULL);
