@@ -12,7 +12,6 @@ class VideoUtils {
   private static final String TAG = "VideoUtils";
 
   static VideoDetail readVideoDetail(File file) {
-
     try {
       final MediaMetadataRetriever retriever = new MediaMetadataRetriever();
       retriever.setDataSource(file.getAbsolutePath());
@@ -25,8 +24,9 @@ class VideoUtils {
               retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
 
       if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR1) {
-        int rotation = Integer
-            .valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION));
+        int rotation =
+            Integer.parseInt(
+                retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION));
 
         // Switch the width/height if video was taken in portrait mode
         if (rotation == 90 || rotation == 270) {
