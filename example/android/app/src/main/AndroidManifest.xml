@@ -1,12 +1,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="asia.ivity.mediainfoexample">
 
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:name="io.flutter.app.FlutterApplication"
         android:label="media_info_example"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+       android:requestLegacyExternalStorage="true"  >
         <activity android:name="io.flutter.embedding.android.FlutterActivity"
           android:launchMode="singleTop"
           android:theme="@android:style/Theme.Black.NoTitleBar"
