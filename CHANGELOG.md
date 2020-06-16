@@ -1,3 +1,14 @@
+## 0.6.2
+
+* Image decoding moved to the Dart side
+* Add support for audio details
+* Fixes bugs when decoding video on Android
+
+## 0.6.1
+
+* Android: Removes logging in the main plugin
+* Android: Removes various unsafe/deprecated method calls
+
 ## 0.6.0
 
 * Update pubspec.yaml format

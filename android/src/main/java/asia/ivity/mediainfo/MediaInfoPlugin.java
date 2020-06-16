@@ -6,7 +6,6 @@ import android.graphics.Bitmap.CompressFormat;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 import androidx.annotation.NonNull;
 import asia.ivity.mediainfo.util.OutputSurface;
 import com.google.android.exoplayer2.C;
@@ -16,6 +15,7 @@ import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.Player.EventListener;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
+import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
@@ -42,7 +42,6 @@ import java9.util.concurrent.CompletableFuture;
 public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
 
   private static final String NAMESPACE = "asia.ivity.flutter";
-  private static final String TAG = "MediaInfoPlugin";
 
   private static final boolean USE_EXOPLAYER = true;
 
@@ -66,17 +65,15 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
   }
 
   @Override
-  public void onDetachedFromEngine(FlutterPluginBinding binding) {
+  public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
     applicationContext = null;
     methodChannel.setMethodCallHandler(null);
     methodChannel = null;
   }
 
-
   private ThreadPoolExecutor executorService;
 
   private Handler mainThreadHandler;
-
 
   private SimpleExoPlayer exoPlayer;
 
@@ -102,12 +99,20 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
 
       handleMediaInfo(applicationContext, path, result);
     } else if (call.method.equalsIgnoreCase("generateThumbnail")) {
+      Integer width = call.argument("width");
+      Integer height = call.argument("height");
+
+      if (width == null || height == null) {
+        result.error("MediaInfo", "invalid-dimensions", null);
+        return;
+      }
+
       handleThumbnail(
           applicationContext,
           call.argument("path"),
           call.argument("target"),
-          call.argument("width"),
-          call.argument("height"),
+          width,
+          height,
           result,
           mainThreadHandler);
     }
@@ -115,14 +120,14 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
 
   private void handleMediaInfo(Context context, String path, Result result) {
     if (USE_EXOPLAYER) {
-      CompletableFuture<VideoDetail> future = new CompletableFuture<>();
+      final CompletableFuture<MediaDetail> future = new CompletableFuture<>();
 
       executorService.execute(
           () -> {
             mainThreadHandler.post(() -> handleMediaInfoExoPlayer(context, path, future));
 
             try {
-              VideoDetail info = future.get();
+              MediaDetail info = future.get();
               mainThreadHandler.post(
                   () -> {
                     if (info != null) {
@@ -139,7 +144,6 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
                   () -> result.error("MediaInfo", e.getCause().getMessage(), null));
             }
 
-            Log.d(TAG, "current ES queue size: " + executorService.getQueue().size());
             if (executorService.getQueue().size() < 1) {
               mainThreadHandler.post(this::releaseExoPlayerAndResources);
             }
@@ -162,9 +166,7 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
   }
 
   private void handleMediaInfoExoPlayer(
-      Context context, String path, CompletableFuture<VideoDetail> future) {
-
-    Log.d(TAG, "get exo media info of " + path);
+      Context context, String path, CompletableFuture<MediaDetail> future) {
 
     ensureExoPlayer();
     exoPlayer.clearVideoSurface();
@@ -175,39 +177,52 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
           public void onTracksChanged(
               TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
 
-            if (trackSelections.length == 0 || trackSelections.get(0) == null) {
-              future.completeExceptionally(new IOException("TracksUnreadable"));
-              return;
+            for (int i = 0; i < trackGroups.length; i++) {
+              TrackGroup tg = trackGroups.get(i);
+              for (int j = 0; j < tg.length; j++) {
+                final Format format = tg.getFormat(j);
+
+                final String mimeType = format.sampleMimeType;
+                if (mimeType == null) {
+                  continue;
+                }
+
+                if (mimeType.contains("video")) {
+                  int width = format.width;
+                  int height = format.height;
+                  int rotation = format.rotationDegrees;
+
+                  // Switch the width/height if video was taken in portrait mode
+                  if (rotation == 90 || rotation == 270) {
+                    int temp = width;
+                    width = height;
+                    height = temp;
+                  }
+
+                  VideoDetail info =
+                      new VideoDetail(
+                          width,
+                          height,
+                          format.frameRate,
+                          exoPlayer.getDuration(),
+                          (short) trackGroups.length,
+                          mimeType);
+                  future.complete(info);
+                  return;
+                } else if (mimeType.contains("audio")) {
+                  AudioDetail audio =
+                      new AudioDetail(exoPlayer.getDuration(), format.bitrate, mimeType);
+                  future.complete(audio);
+                  return;
+                }
+              }
             }
 
-            Format format = trackSelections.get(0).getSelectedFormat();
-
-            int width = format.width;
-            int height = format.height;
-            int rotation = format.rotationDegrees;
-
-            // Switch the width/height if video was taken in portrait mode
-            if (rotation == 90 || rotation == 270) {
-              int temp = width;
-              width = height;
-              height = temp;
-            }
-
-            VideoDetail info =
-                new VideoDetail(
-                    width,
-                    height,
-                    format.frameRate,
-                    exoPlayer.getDuration(),
-                    (short) trackGroups.length,
-                    format.sampleMimeType);
-            //            exoPlayer.release();
-            future.complete(info);
+            future.completeExceptionally(new IOException("TracksUnreadable"));
           }
 
           @Override
           public void onPlayerError(ExoPlaybackException error) {
-            Log.e(TAG, "Player Error for this file", error);
             future.completeExceptionally(error);
             //            exoPlayer.release();
           }
@@ -218,7 +233,6 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
     future.whenComplete(
         (videoDetail, throwable) -> {
           exoPlayer.removeListener(listener);
-          Log.d(TAG, "get exo media info of " + path + " *FINISHED*");
         });
 
     DataSource.Factory dataSourceFactory =
@@ -248,13 +262,11 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
     executorService.submit(
         () -> {
           if (target.exists()) {
-            Log.e(TAG, "Target $target file already exists.");
             mainThreadHandler.post(() -> result.error("MediaInfo", "FileOverwriteDenied", null));
             return;
           }
 
           if (context == null) {
-            Log.e(TAG, "Context disappeared");
             mainThreadHandler.post(() -> result.error("MediaInfo", "ContextDisappeared", null));
 
             return;
@@ -272,11 +284,9 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
             } catch (InterruptedException e) {
               mainThreadHandler.post(() -> result.error("MediaInfo", "Interrupted", null));
             } catch (ExecutionException e) {
-              Log.e(TAG, "Execution exception", e);
               mainThreadHandler.post(() -> result.error("MediaInfo", "Misc", null));
             }
 
-            Log.d(TAG, "current ES queue size: " + executorService.getQueue().size());
             if (executorService.getQueue().size() < 1) {
               mainThreadHandler.post(this::releaseExoPlayerAndResources);
             }
@@ -294,8 +304,6 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
       int height,
       File target,
       CompletableFuture<String> future) {
-    Log.d(TAG, "Start decoding: " + path + ", in res: " + width + " x " + height);
-
     ensureExoPlayer();
     ensureSurface(width, height);
 
@@ -316,7 +324,6 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
 
             future.complete(target.getAbsolutePath());
           } catch (IOException e) {
-            Log.e(TAG, "File not found", e);
             future.completeExceptionally(e);
           }
         });
@@ -341,7 +348,6 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
 
           @Override
           public void onPlayerError(ExoPlaybackException error) {
-            Log.e(TAG, "Player Error for this file", error);
             future.completeExceptionally(error);
           }
         };
@@ -353,9 +359,6 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
         (s, throwable) -> {
           //          exoPlayer.removeVideoListener(videoListener);
           exoPlayer.removeListener(eventListener);
-          Log.d(
-              TAG,
-              "Start decoding: " + path + ", in res: " + width + " x " + height + " *FINISHED*");
         });
 
     DataSource.Factory dataSourceFactory =
@@ -378,7 +381,8 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
         }
       }
 
-      selector.setRendererDisabled(indexOfAudioRenderer, true);
+      selector.setParameters(
+          selector.getParameters().buildUpon().setRendererDisabled(indexOfAudioRenderer, true));
     }
 
     exoPlayer.setPlayWhenReady(false);
@@ -422,10 +426,7 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
     if (file != null && file.renameTo(target)) {
       mainThreadHandler.post(() -> result.success(target.getAbsolutePath()));
     } else {
-      Log.e(TAG, "File does not generate or does not exist: " + file);
       mainThreadHandler.post(() -> result.error("MediaInfo", "FileCreationFailed", null));
     }
   }
-
-
 }

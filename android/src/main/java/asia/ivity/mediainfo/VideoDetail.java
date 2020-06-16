@@ -2,7 +2,7 @@ package asia.ivity.mediainfo;
 
 import java.util.HashMap;
 
-class VideoDetail {
+class VideoDetail implements MediaDetail {
 
   private final int width;
   private final int height;
@@ -21,7 +21,8 @@ class VideoDetail {
     this.mimeType = mimeType;
   }
 
-  HashMap<String, Object> toMap() {
+  @Override
+  public HashMap<String, Object> toMap() {
     HashMap<String, Object> map = new HashMap<>();
 
     map.put("width", width);

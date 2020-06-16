@@ -24,6 +24,13 @@
 	<true/>
 	<key>UIFileSharingEnabled</key>
 	<true/>
+    <key>UIBackgroundModes</key>
+    <array>
+       <string>fetch</string>
+       <string>remote-notification</string>
+    </array>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Explain why your app uses photo library</string>
 	<key>UISupportsDocumentBrowser</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
