@@ -9,7 +9,7 @@ dependencies:
     sdk: flutter
   flutter_driver:
     sdk: flutter
-  e2e: ^0.2.3
+  e2e: ^0.5.0
 
 dev_dependencies:
   flutter_test:
