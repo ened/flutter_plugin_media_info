@@ -1,3 +1,7 @@
+## 0.6.3
+
+* Resolve iOS issues when reading audio tracks
+
 ## 0.6.2
 
 * Image decoding moved to the Dart side
