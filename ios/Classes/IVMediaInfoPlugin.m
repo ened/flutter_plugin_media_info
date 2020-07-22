@@ -73,7 +73,7 @@
     }
   } else if ([mime hasPrefix:@"audio/"]) {
       AVURLAsset *asset = [AVURLAsset URLAssetWithURL:mediaURL options:nil];
-      NSArray *tracks = [asset tracksWithMediaType:AVMediaTypeVideo];
+      NSArray *tracks = [asset tracksWithMediaType:AVMediaTypeAudio];
       
       if ([tracks count] > 0) {
         AVAssetTrack *track = [tracks objectAtIndex:0];
@@ -83,7 +83,7 @@
 
       } else {
         NSLog(@"[media_info] Can not read: %@", mediaURL);
-        result([FlutterError errorWithCode:@"MediaInfo" message:@"InvalidVideo" details:nil]);
+        result([FlutterError errorWithCode:@"MediaInfo" message:@"InvalidAudio" details:nil]);
         return;
       }
   } else if ([mime hasPrefix:@"image/"]) {
