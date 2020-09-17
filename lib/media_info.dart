@@ -61,7 +61,9 @@ class MediaInfo {
 
       final ImageStreamListener listener =
           ImageStreamListener((ImageInfo image, __) {
-        completer.complete(image.image);
+        if (!completer.isCompleted) {
+          completer.complete(image.image);
+        }
       });
 
       stream.addListener(listener);
