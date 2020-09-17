@@ -1,3 +1,7 @@
+## 0.6.4
+
+* Resolve issue when a image info completer may be resolved twice
+
 ## 0.6.3
 
 * Resolve iOS issues when reading audio tracks
