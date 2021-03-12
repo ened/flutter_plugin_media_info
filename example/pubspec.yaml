@@ -3,8 +3,8 @@ description: Demonstrates how to use the media_info plugin.
 publish_to: 'none'
 
 dependencies:
-  file_picker: ^1.11.0+3
-  path_provider: ^1.6.10
+  file_picker: ^2.1.7
+  path_provider: ^1.6.27
   flutter:
     sdk: flutter
 

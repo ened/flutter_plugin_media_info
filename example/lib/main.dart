@@ -124,20 +124,21 @@ class _MyAppState extends State<MyApp> {
     return FloatingActionButton(
       child: Icon(Icons.attach_file),
       onPressed: () async {
-        final String mediaFile = await FilePicker.getFilePath();
+        final FilePickerResult mediaFile =
+            await FilePicker.platform.pickFiles();
 
         if (!mounted || mediaFile == null) {
           return;
         }
 
         setState(() {
-          _file = mediaFile;
+          _file = mediaFile.files.single.path;
           _mediaInfoCache = null;
           _thumbnails.clear();
         });
 
         final Map<String, dynamic> mediaInfo =
-            await _mediaInfo.getMediaInfo(mediaFile);
+            await _mediaInfo.getMediaInfo(_file);
 
         if (!mounted || mediaInfo == null) {
           return;
