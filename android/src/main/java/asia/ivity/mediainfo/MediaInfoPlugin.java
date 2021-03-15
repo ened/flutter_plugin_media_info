@@ -6,8 +6,9 @@ import android.graphics.Bitmap.CompressFormat;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
+
 import androidx.annotation.NonNull;
-import asia.ivity.mediainfo.util.OutputSurface;
+
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayerFactory;
@@ -22,13 +23,7 @@ import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
-import io.flutter.embedding.engine.plugins.FlutterPlugin;
-import io.flutter.plugin.common.BinaryMessenger;
-import io.flutter.plugin.common.MethodCall;
-import io.flutter.plugin.common.MethodChannel;
-import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
-import io.flutter.plugin.common.MethodChannel.Result;
-import io.flutter.plugin.common.PluginRegistry.Registrar;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -37,6 +32,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import asia.ivity.mediainfo.util.OutputSurface;
+import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.plugin.common.BinaryMessenger;
+import io.flutter.plugin.common.MethodCall;
+import io.flutter.plugin.common.MethodChannel;
+import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
+import io.flutter.plugin.common.MethodChannel.Result;
+import io.flutter.plugin.common.PluginRegistry.Registrar;
 import java9.util.concurrent.CompletableFuture;
 
 public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
@@ -113,6 +117,7 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
           call.argument("target"),
           width,
           height,
+          call.argument("positionMs"),
           result,
           mainThreadHandler);
     }
@@ -254,6 +259,7 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
       String targetPath,
       int width,
       int height,
+      int positionMs,
       Result result,
       Handler mainThreadHandler) {
 
@@ -276,7 +282,7 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
             CompletableFuture<String> future = new CompletableFuture<>();
 
             mainThreadHandler.post(
-                () -> handleThumbnailExoPlayer(context, path, width, height, target, future));
+                () -> handleThumbnailExoPlayer(context, path, width, height, positionMs, target, future));
 
             try {
               final String futureResult = future.get();
@@ -302,6 +308,7 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
       String path,
       int width,
       int height,
+      int positionMs,
       File target,
       CompletableFuture<String> future) {
     ensureExoPlayer();
@@ -328,24 +335,8 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
           }
         });
 
-    //    final AtomicBoolean renderedFirstFrame = new AtomicBoolean(false);
-    //    final VideoListener videoListener =
-    //        new VideoListener() {
-    //          @Override
-    //          public void onRenderedFirstFrame() {
-    //            renderedFirstFrame.set(true);
-    //          }
-    //        };
-
     final EventListener eventListener =
         new EventListener() {
-          //          @Override
-          //          public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-          //            if (playbackState == ExoPlayer.STATE_READY) {
-          //              if (renderedFirstFrame.get()) {}
-          //            }
-          //          }
-
           @Override
           public void onPlayerError(ExoPlaybackException error) {
             future.completeExceptionally(error);
@@ -363,9 +354,12 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
 
     DataSource.Factory dataSourceFactory =
         new DefaultDataSourceFactory(context, Util.getUserAgent(context, "media_info"));
-    exoPlayer.prepare(
-        new ProgressiveMediaSource.Factory(dataSourceFactory)
-            .createMediaSource(Uri.fromFile(new File(path))));
+      exoPlayer.seekTo(positionMs);
+      exoPlayer.prepare(
+              new ProgressiveMediaSource.Factory(dataSourceFactory)
+                      .createMediaSource(Uri.fromFile(new File(path))),
+              false,
+              false);
   }
 
   private synchronized void ensureExoPlayer() {

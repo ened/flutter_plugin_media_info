@@ -107,6 +107,7 @@
   NSString *target = [args objectForKey:@"target"];
   NSNumber *width = [args objectForKey:@"width"];
   NSNumber *height = [args objectForKey:@"height"];
+  NSNumber *positionMs = [args objectForKey:@"positionMs"];
   
   if ([[NSFileManager defaultManager] fileExistsAtPath: target]) {
     result([FlutterError errorWithCode:@"MediaInfo" message:@"FileOverwriteDenied" details:nil]);
@@ -116,12 +117,11 @@
   NSURL *mediaURL = [NSURL fileURLWithPath:path];
   AVAsset *asset = [AVURLAsset URLAssetWithURL:mediaURL options:nil];
   
-  CGFloat durationSeconds = CMTimeGetSeconds(asset.duration);
   AVAssetImageGenerator *generator = [[AVAssetImageGenerator alloc] initWithAsset:asset];
   
   generator.appliesPreferredTrackTransform = YES;
   
-  CMTime time = CMTimeMakeWithSeconds(durationSeconds / 3.0, 600);
+  CMTime time = CMTimeMake(positionMs.intValue, 1000);
   
   [generator generateCGImagesAsynchronouslyForTimes:@[[NSValue valueWithCMTime:time]]
                                   completionHandler:^(CMTime requestedTime,

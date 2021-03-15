@@ -167,8 +167,13 @@ class _MyAppState extends State<MyApp> {
               File(target).deleteSync();
             }
 
-            _thumbnails['${res.w}x${res.h}'] =
-                _mediaInfo.generateThumbnail(_file, target, res.w, res.h);
+            _thumbnails['${res.w}x${res.h}'] = _mediaInfo.generateThumbnail(
+              _file,
+              target,
+              res.w,
+              res.h,
+              positionMs: 100,
+            );
           }
         }
 
