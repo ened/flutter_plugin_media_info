@@ -137,27 +137,27 @@ class _MyAppState extends State<MyApp> {
           _thumbnails.clear();
         });
 
-        final Map<String, dynamic> mediaInfo =
-            await _mediaInfo.getMediaInfo(_file);
-
-        if (!mounted || mediaInfo == null) {
-          return;
-        }
-
-        setState(() {
-          _mediaInfoCache = mediaInfo;
-        });
+        // final Map<String, dynamic> mediaInfo =
+        //     await _mediaInfo.getMediaInfo(_file);
+        //
+        // if (!mounted || mediaInfo == null) {
+        //   return;
+        // }
+        //
+        // setState(() {
+        //   _mediaInfoCache = mediaInfo;
+        // });
 
         final Directory cacheDir = await getTemporaryDirectory();
         final int cacheName = _file.hashCode;
 
-        final int w = mediaInfo['width'];
-        final int h = mediaInfo['height'];
+        final int w = 3840; //mediaInfo['width'];
+        final int h = 2160; //mediaInfo['height'];
 
-        final String mime = mediaInfo['mimeType'];
-        if (mime.startsWith("video/")) {
+        // final String mime = mediaInfo['mimeType'];
+        if (true) { // (mime.startsWith("video/")) {
           Set<Resolution> resolutions = Set();
-          resolutions.addAll(_resolutions);
+          // resolutions.addAll(_resolutions);
           resolutions.add(Resolution(w, h));
 
           for (final Resolution res in resolutions) {
