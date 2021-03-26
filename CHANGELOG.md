@@ -1,3 +1,10 @@
+## 0.6.5
+
+* Resolve issue when a image info completer may be resolved twice
+* Specify a time to generate the thumbnail from
+* Generate thumbnails from network videos
+* Updated example app to include image from network video
+
 ## 0.6.4
 
 * Resolve issue when a image info completer may be resolved twice
