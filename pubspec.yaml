@@ -5,7 +5,7 @@ homepage: https://github.com/ened/flutter_plugin_media_info
 
 environment:
   sdk: '>=2.10.0 <3.0.0'
-  flutter: ">=1.12.13+hotfix.6 <2.0.0"
+  flutter: ">=1.12.13+hotfix.6"
 
 dependencies:
   mime: ^0.9.7
