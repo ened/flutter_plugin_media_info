@@ -1,3 +1,7 @@
+## 0.7.0
+
+* Support null-safety
+
 ## 0.6.5
 
 * Resolve issue when a image info completer may be resolved twice
