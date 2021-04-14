@@ -37,8 +37,8 @@ const List<Resolution> _resolutions = [
 ];
 
 class _MyAppState extends State<MyApp> {
-  String _file;
-  Map<String, dynamic> _mediaInfoCache;
+  String? _file;
+  Map<String, dynamic>? _mediaInfoCache;
   final Map<String, Future<String>> _thumbnails = <String, Future<String>>{};
 
   final MediaInfo _mediaInfo = MediaInfo();
@@ -62,7 +62,7 @@ class _MyAppState extends State<MyApp> {
                   Text(_file ?? 'Please select a file'),
                   Text(
                     (_mediaInfoCache?.keys ?? <String>[])
-                        .map((String k) => '$k: ${_mediaInfoCache[k]}')
+                        .map((String k) => '$k: ${_mediaInfoCache![k]}')
                         .join(',\n\n'),
                     style: Theme.of(context).textTheme.body2,
                   ),
@@ -88,7 +88,7 @@ class _MyAppState extends State<MyApp> {
                             future: _thumbnails[res],
                             builder: (BuildContext context, snapshot) {
                               if (snapshot.hasData) {
-                                return Image.file(File(snapshot.data));
+                                return Image.file(File(snapshot.data!));
                               }
                               if (snapshot.hasError) {
                                 return Text(
@@ -128,7 +128,7 @@ class _MyAppState extends State<MyApp> {
           key: Key("local file"),
           child: Icon(Icons.attach_file),
           onPressed: () async {
-            final FilePickerResult mediaFile =
+            final FilePickerResult? mediaFile =
                 await FilePicker.platform.pickFiles();
 
             if (!mounted || mediaFile == null) {
@@ -142,7 +142,7 @@ class _MyAppState extends State<MyApp> {
             });
 
             final Map<String, dynamic> mediaInfo =
-                await _mediaInfo.getMediaInfo(_file);
+                await _mediaInfo.getMediaInfo(_file!);
 
             if (!mounted || mediaInfo == null) {
               return;
@@ -172,7 +172,7 @@ class _MyAppState extends State<MyApp> {
                 }
 
                 _thumbnails['${res.w}x${res.h}'] = _mediaInfo.generateThumbnail(
-                  _file,
+                  _file!,
                   target,
                   res.w,
                   res.h,

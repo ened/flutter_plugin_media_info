@@ -12,12 +12,9 @@ import 'package:mime/mime.dart';
 class MediaInfo {
   /// Initializes the plugin and starts listening for potential platform events.
   factory MediaInfo() {
-    if (_instance == null) {
-      final MethodChannel methodChannel =
-          const MethodChannel('asia.ivity.flutter/media_info');
-      _instance = MediaInfo.private(methodChannel);
-    }
-    return _instance;
+    return _instance ??= MediaInfo.private(
+      const MethodChannel('asia.ivity.flutter/media_info'),
+    );
   }
 
   /// This constructor is only used for testing and shouldn't be accessed by
@@ -25,7 +22,7 @@ class MediaInfo {
   @visibleForTesting
   MediaInfo.private(this._methodChannel);
 
-  static MediaInfo _instance;
+  static MediaInfo? _instance;
 
   final MethodChannel _methodChannel;
 
@@ -52,7 +49,7 @@ class MediaInfo {
   Future<Map<String, dynamic>> getMediaInfo(String path) async {
     final RandomAccessFile file = File(path).openSync();
     final Uint8List headerBytes = file.readSync(defaultMagicNumbersMaxLength);
-    final String mimeType = lookupMimeType(path, headerBytes: headerBytes);
+    final String? mimeType = lookupMimeType(path, headerBytes: headerBytes);
 
     if (mimeType?.startsWith('image') == true) {
       Completer<ui.Image> completer = Completer<ui.Image>();
@@ -79,10 +76,10 @@ class MediaInfo {
       };
     }
 
-    return _methodChannel.invokeMapMethod<String, dynamic>(
+    return (await _methodChannel.invokeMapMethod<String, dynamic>(
       'getMediaInfo',
       path,
-    );
+    ))!;
   }
 
   /// Generate a thumbnail for a video or image file.
@@ -111,8 +108,8 @@ class MediaInfo {
 
     /// Position of the video in milliseconds where to generate the image from
     int positionMs = 0,
-  }) {
-    return _methodChannel.invokeMethod<String>(
+  }) async {
+    return (await _methodChannel.invokeMethod<String>(
       'generateThumbnail',
       <String, dynamic>{
         'path': path,
@@ -121,6 +118,6 @@ class MediaInfo {
         'height': height,
         'positionMs': positionMs,
       },
-    );
+    ))!;
   }
 }
