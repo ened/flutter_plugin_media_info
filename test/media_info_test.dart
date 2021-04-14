@@ -1,11 +1,15 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:media_info/media_info.dart';
+import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
+import 'media_info_test.mocks.dart';
+
+@GenerateMocks([MethodChannel])
 void main() {
-  MockMethodChannel methodChannel;
-  MediaInfo mediaInfo;
+  late MockMethodChannel methodChannel;
+  late MediaInfo mediaInfo;
 
   setUp(() {
     methodChannel = MockMethodChannel();
@@ -37,5 +41,3 @@ void main() {
     );
   });
 }
-
-class MockMethodChannel extends Mock implements MethodChannel {}

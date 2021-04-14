@@ -37,8 +37,8 @@ const List<Resolution> _resolutions = [
 ];
 
 class _MyAppState extends State<MyApp> {
-  String _file;
-  Map<String, dynamic> _mediaInfoCache;
+  String? _file;
+  Map<String, dynamic>? _mediaInfoCache;
   final Map<String, Future<String>> _thumbnails = <String, Future<String>>{};
 
   final MediaInfo _mediaInfo = MediaInfo();

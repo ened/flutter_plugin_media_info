@@ -4,18 +4,19 @@ version: 0.6.5
 homepage: https://github.com/ened/flutter_plugin_media_info
 
 environment:
-  sdk: '>=2.10.0 <3.0.0'
+  sdk: '>=2.12.0 <3.0.0'
   flutter: ">=1.12.13+hotfix.6"
 
 dependencies:
-  mime: ^0.9.7
+  mime: ^1.0.0
   flutter:
     sdk: flutter
 
 dev_dependencies:
-  file_picker: ^2.1.7
-  path_provider: ^1.6.27
-  mockito: ^4.1.1
+  build_runner: ^1.11.0
+  file_picker: ^3.0.1
+  path_provider: ^2.0.1
+  mockito: ^5.0.4
   flutter_test:
     sdk: flutter
 
