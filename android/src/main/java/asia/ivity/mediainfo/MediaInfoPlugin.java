@@ -6,14 +6,13 @@ import android.graphics.Bitmap.CompressFormat;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
-
 import androidx.annotation.NonNull;
-
+import asia.ivity.mediainfo.util.OutputSurface;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.Player.EventListener;
+import com.google.android.exoplayer2.Player.Listener;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.source.TrackGroup;
@@ -23,7 +22,13 @@ import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
-
+import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.plugin.common.BinaryMessenger;
+import io.flutter.plugin.common.MethodCall;
+import io.flutter.plugin.common.MethodChannel;
+import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
+import io.flutter.plugin.common.MethodChannel.Result;
+import io.flutter.plugin.common.PluginRegistry.Registrar;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -32,15 +37,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import asia.ivity.mediainfo.util.OutputSurface;
-import io.flutter.embedding.engine.plugins.FlutterPlugin;
-import io.flutter.plugin.common.BinaryMessenger;
-import io.flutter.plugin.common.MethodCall;
-import io.flutter.plugin.common.MethodChannel;
-import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
-import io.flutter.plugin.common.MethodChannel.Result;
-import io.flutter.plugin.common.PluginRegistry.Registrar;
 import java9.util.concurrent.CompletableFuture;
 
 public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
@@ -281,7 +277,8 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
             CompletableFuture<String> future = new CompletableFuture<>();
 
             mainThreadHandler.post(
-                () -> handleThumbnailExoPlayer(context, path, width, height, positionMs, target, future));
+                () -> handleThumbnailExoPlayer(context, path, width, height, positionMs, target,
+                    future));
 
             try {
               final String futureResult = future.get();
@@ -334,10 +331,10 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
           }
         });
 
-    final EventListener eventListener =
-        new EventListener() {
+    final Listener eventListener =
+        new Listener() {
           @Override
-          public void onPlayerError(ExoPlaybackException error) {
+          public void onPlayerError(@NonNull ExoPlaybackException error) {
             future.completeExceptionally(error);
           }
         };
@@ -351,18 +348,19 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
 
     DataSource.Factory dataSourceFactory =
         new DefaultDataSourceFactory(context, Util.getUserAgent(context, "media_info"));
-      exoPlayer.seekTo(positionMs);
-      exoPlayer.prepare(
-              new ProgressiveMediaSource.Factory(dataSourceFactory)
-                      .createMediaSource(Uri.parse(path)),
-              false,
-              false);
+    exoPlayer.seekTo(positionMs);
+    exoPlayer.prepare(
+        new ProgressiveMediaSource.Factory(dataSourceFactory)
+            .createMediaSource(Uri.parse(path)),
+        false,
+        false);
   }
 
   private synchronized void ensureExoPlayer() {
     if (exoPlayer == null) {
-      DefaultTrackSelector selector = new DefaultTrackSelector();
-      exoPlayer = ExoPlayerFactory.newSimpleInstance(applicationContext, selector);
+      DefaultTrackSelector selector = new DefaultTrackSelector(applicationContext);
+      exoPlayer = new SimpleExoPlayer.Builder(applicationContext).setTrackSelector(selector)
+          .build();
 
       int indexOfAudioRenderer = -1;
       for (int i = 0; i < exoPlayer.getRendererCount(); i++) {
