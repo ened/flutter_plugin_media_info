@@ -11,7 +11,7 @@ import asia.ivity.mediainfo.util.OutputSurface;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.Format;
-import com.google.android.exoplayer2.Player.EventListener;
+import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.Player.Listener;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
@@ -28,7 +28,6 @@ import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
-import io.flutter.plugin.common.PluginRegistry.Registrar;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -47,11 +46,6 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
 
   private Context applicationContext;
   private MethodChannel methodChannel;
-
-  public static void registerWith(Registrar registrar) {
-    final MediaInfoPlugin instance = new MediaInfoPlugin();
-    instance.onAttachedToEngine(registrar.context(), registrar.messenger());
-  }
 
   @Override
   public void onAttachedToEngine(FlutterPluginBinding binding) {
@@ -101,10 +95,15 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
     } else if (call.method.equalsIgnoreCase("generateThumbnail")) {
       Integer width = call.argument("width");
       Integer height = call.argument("height");
+      Integer positionMs = call.argument("positionMs");
 
       if (width == null || height == null) {
         result.error("MediaInfo", "invalid-dimensions", null);
         return;
+      }
+
+      if (positionMs == null) {
+        positionMs = 0;
       }
 
       handleThumbnail(
@@ -113,7 +112,7 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
           call.argument("target"),
           width,
           height,
-          call.argument("positionMs"),
+          positionMs,
           result,
           mainThreadHandler);
     }
@@ -172,11 +171,11 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
     ensureExoPlayer();
     exoPlayer.clearVideoSurface();
 
-    final EventListener listener =
-        new EventListener() {
+    final Listener listener =
+        new Listener() {
           @Override
           public void onTracksChanged(
-              TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
+              TrackGroupArray trackGroups, @NonNull TrackSelectionArray trackSelections) {
 
             for (int i = 0; i < trackGroups.length; i++) {
               TrackGroup tg = trackGroups.get(i);
@@ -196,6 +195,7 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
                   // Switch the width/height if video was taken in portrait mode
                   if (rotation == 90 || rotation == 270) {
                     int temp = width;
+                    //noinspection SuspiciousNameCombination
                     width = height;
                     height = temp;
                   }
@@ -223,7 +223,7 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
           }
 
           @Override
-          public void onPlayerError(ExoPlaybackException error) {
+          public void onPlayerError(@NonNull ExoPlaybackException error) {
             future.completeExceptionally(error);
           }
         };
@@ -231,15 +231,14 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
     exoPlayer.addListener(listener);
 
     future.whenComplete(
-        (videoDetail, throwable) -> {
-          exoPlayer.removeListener(listener);
-        });
+        (videoDetail, throwable) -> exoPlayer.removeListener(listener));
 
     DataSource.Factory dataSourceFactory =
         new DefaultDataSourceFactory(context, Util.getUserAgent(context, "media_info"));
-    exoPlayer.prepare(
+    exoPlayer.setMediaSource(
         new ProgressiveMediaSource.Factory(dataSourceFactory)
-            .createMediaSource(Uri.parse(path)));
+            .createMediaSource(MediaItem.fromUri(Uri.parse(path))));
+    exoPlayer.prepare();
   }
 
   private VideoDetail handleMediaInfoMediaStore(String path) {
@@ -342,18 +341,16 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
     exoPlayer.addListener(eventListener);
 
     future.whenComplete(
-        (s, throwable) -> {
-          exoPlayer.removeListener(eventListener);
-        });
+        (s, throwable) -> exoPlayer.removeListener(eventListener));
 
     DataSource.Factory dataSourceFactory =
         new DefaultDataSourceFactory(context, Util.getUserAgent(context, "media_info"));
     exoPlayer.seekTo(positionMs);
-    exoPlayer.prepare(
+    exoPlayer.setMediaSource(
         new ProgressiveMediaSource.Factory(dataSourceFactory)
-            .createMediaSource(Uri.parse(path)),
-        false,
-        false);
+            .createMediaSource(MediaItem.fromUri(Uri.parse(path))),
+        true
+    );
   }
 
   private synchronized void ensureExoPlayer() {
@@ -375,7 +372,7 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
     }
 
     exoPlayer.setPlayWhenReady(false);
-    exoPlayer.stop(true);
+//    exoPlayer.stop(true);
   }
 
   private void ensureSurface(int width, int height) {
