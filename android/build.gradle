@@ -4,18 +4,18 @@ version '1.0-SNAPSHOT'
 buildscript {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.6.3'
+        classpath 'com.android.tools.build:gradle:7.0.0'
     }
 }
 
 rootProject.allprojects {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
     }
 }
 
@@ -42,7 +42,7 @@ repositories {
     mavenCentral()
 }
 dependencies {
-    implementation 'com.github.bumptech.glide:glide:4.10.0'
-    implementation 'com.google.android.exoplayer:exoplayer-core:2.11.5'
+    implementation 'com.github.bumptech.glide:glide:4.12.0'
+    implementation 'com.google.android.exoplayer:exoplayer-core:2.14.2'
     implementation 'net.sourceforge.streamsupport:android-retrofuture:1.7.2'
 }

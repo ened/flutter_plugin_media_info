@@ -1,3 +1,7 @@
+
+## 0.8.0
+
+* Android: **BREAKING CHANGE** Plugin now depends on ExoPlayer 2.14.2
 ## 0.7.0
 
 * Support null-safety
