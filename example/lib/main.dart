@@ -64,7 +64,7 @@ class _MyAppState extends State<MyApp> {
                     (_mediaInfoCache?.keys ?? <String>[])
                         .map((String k) => '$k: ${_mediaInfoCache![k]}')
                         .join(',\n\n'),
-                    style: Theme.of(context).textTheme.body2,
+                    style: Theme.of(context).textTheme.bodyText2,
                   ),
                   Builder(
                     builder: (BuildContext context) {
@@ -144,7 +144,7 @@ class _MyAppState extends State<MyApp> {
             final Map<String, dynamic> mediaInfo =
                 await _mediaInfo.getMediaInfo(_file!);
 
-            if (!mounted || mediaInfo == null) {
+            if (!mounted || mediaInfo.isEmpty) {
               return;
             }
 
