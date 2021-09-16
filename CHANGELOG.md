@@ -1,7 +1,12 @@
+## 0.9.0
+
+* Android: **BREAKING CHANGE** Plugin now depends on ExoPlayer 2.15.0
+* Android: Resolves a issue which may cause a deadlock when reading media information.
 
 ## 0.8.0
 
 * Android: **BREAKING CHANGE** Plugin now depends on ExoPlayer 2.14.2
+
 ## 0.7.0
 
 * Support null-safety
