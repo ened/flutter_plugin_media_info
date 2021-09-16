@@ -189,7 +189,6 @@ class _MyAppState extends State<MyApp> {
           key: Key("remote file"),
           child: Icon(Icons.wifi),
           onPressed: () async {
-
             setState(() {
               _file = "remote file";
               _mediaInfoCache = null;
