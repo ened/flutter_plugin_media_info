@@ -6,12 +6,14 @@ import android.graphics.Bitmap.CompressFormat;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import androidx.annotation.NonNull;
 import asia.ivity.mediainfo.util.OutputSurface;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.MediaItem;
+import com.google.android.exoplayer2.PlaybackException;
 import com.google.android.exoplayer2.Player.Listener;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
@@ -39,6 +41,8 @@ import java.util.concurrent.TimeUnit;
 import java9.util.concurrent.CompletableFuture;
 
 public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
+
+  private static final String TAG = "MediaInfoPlugin";
 
   private static final String NAMESPACE = "asia.ivity.flutter";
 
@@ -177,6 +181,11 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
           public void onTracksChanged(
               TrackGroupArray trackGroups, @NonNull TrackSelectionArray trackSelections) {
 
+            if(trackGroups.length == 0) {
+              Log.d(TAG, "Tracks Changed, track groups currently empty");
+              return;
+            }
+
             for (int i = 0; i < trackGroups.length; i++) {
               TrackGroup tg = trackGroups.get(i);
               for (int j = 0; j < tg.length; j++) {
@@ -223,7 +232,7 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
           }
 
           @Override
-          public void onPlayerError(@NonNull ExoPlaybackException error) {
+          public void onPlayerError(PlaybackException error) {
             future.completeExceptionally(error);
           }
         };
@@ -280,7 +289,9 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
                     future));
 
             try {
+              Log.d(TAG, "Await thumbnail result.");
               final String futureResult = future.get();
+              Log.d(TAG, "Received thumbnail result.");
               mainThreadHandler.post(() -> result.success(futureResult));
             } catch (InterruptedException e) {
               mainThreadHandler.post(() -> result.error("MediaInfo", "Interrupted", null));
@@ -333,7 +344,8 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
     final Listener eventListener =
         new Listener() {
           @Override
-          public void onPlayerError(@NonNull ExoPlaybackException error) {
+          public void onPlayerError(PlaybackException error) {
+            Log.e(TAG, "Player error", error);
             future.completeExceptionally(error);
           }
         };
@@ -351,6 +363,7 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
             .createMediaSource(MediaItem.fromUri(Uri.parse(path))),
         true
     );
+    exoPlayer.prepare();
   }
 
   private synchronized void ensureExoPlayer() {
