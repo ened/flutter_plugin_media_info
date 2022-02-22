@@ -14,6 +14,7 @@ import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.PlaybackException;
+import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.Player.Listener;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
@@ -322,6 +323,8 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
 
     surface.setFrameFinished(
         () -> {
+            Log.d(TAG,"handleThumbnailExoPlayer::setFrameFinished::init ");
+
           try {
             surface.awaitNewImage(500);
           } catch (Exception e) {
@@ -345,9 +348,18 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
         new Listener() {
           @Override
           public void onPlayerError(PlaybackException error) {
-            Log.e(TAG, "Player error", error);
-            future.completeExceptionally(error);
+              Log.e(TAG, "Player error", error);
+              future.completeExceptionally(error);
           }
+
+            @Override
+            public void onPlayWhenReadyChanged(boolean playWhenReady, int reason) {
+                Log.d(TAG, "onPlayWhenReadyChanged");
+
+                exoPlayer.seekTo(positionMs);
+                Log.d(TAG,
+                        "onPlayWhenReadyChanged - Done seekTo: " + positionMs);
+            }
         };
 
     exoPlayer.addListener(eventListener);
@@ -357,13 +369,17 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
 
     DataSource.Factory dataSourceFactory =
         new DefaultDataSourceFactory(context, Util.getUserAgent(context, "media_info"));
-    exoPlayer.seekTo(positionMs);
+
     exoPlayer.setMediaSource(
         new ProgressiveMediaSource.Factory(dataSourceFactory)
             .createMediaSource(MediaItem.fromUri(Uri.parse(path))),
         true
     );
     exoPlayer.prepare();
+    Log.d(TAG, "done prepare..");
+
+    exoPlayer.setPlayWhenReady(true);
+    Log.d(TAG, "done setPlayWhenReady..");
   }
 
   private synchronized void ensureExoPlayer() {
