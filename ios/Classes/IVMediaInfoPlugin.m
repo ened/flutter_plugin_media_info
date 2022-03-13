@@ -120,6 +120,9 @@
   AVAssetImageGenerator *generator = [[AVAssetImageGenerator alloc] initWithAsset:asset];
   
   generator.appliesPreferredTrackTransform = YES;
+    
+  generator.requestedTimeToleranceAfter = kCMTimeZero;
+  generator.requestedTimeToleranceBefore = kCMTimeZero;
   
   CMTime time = CMTimeMake(positionMs.intValue, 1000);
   
