@@ -1,3 +1,8 @@
+## 0.10.0
+
+* Migrate project for Flutter 2.10
+* Fixed a few issues regarding screenshot accuracy for videos. Thank you @psimoes93
+
 ## 0.9.0
 
 * Android: **BREAKING CHANGE** Plugin now depends on ExoPlayer 2.15.0
