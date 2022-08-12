@@ -7,30 +7,31 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+
 import androidx.annotation.NonNull;
+
 import asia.ivity.mediainfo.util.OutputSurface;
+
 import com.google.android.exoplayer2.C;
-import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.PlaybackException;
-import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.Player.Listener;
-import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.Tracks;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
-import com.google.android.exoplayer2.source.TrackGroup;
-import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
-import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.upstream.DataSource;
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
-import com.google.android.exoplayer2.util.Util;
+import com.google.android.exoplayer2.upstream.DefaultDataSource;
+import com.google.common.collect.ImmutableList;
+
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -39,6 +40,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
 import java9.util.concurrent.CompletableFuture;
 
 public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
@@ -74,7 +76,7 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
 
   private Handler mainThreadHandler;
 
-  private SimpleExoPlayer exoPlayer;
+  private ExoPlayer exoPlayer;
 
   @Override
   public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
@@ -179,18 +181,23 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
     final Listener listener =
         new Listener() {
           @Override
-          public void onTracksChanged(
-              TrackGroupArray trackGroups, @NonNull TrackSelectionArray trackSelections) {
+          public void onTracksChanged(Tracks tracks) {
+            ImmutableList<Tracks.Group> trackGroups = tracks.getGroups();
 
-            if(trackGroups.length == 0) {
+            if (trackGroups.size() == 0) {
               Log.d(TAG, "Tracks Changed, track groups currently empty");
               return;
             }
 
-            for (int i = 0; i < trackGroups.length; i++) {
-              TrackGroup tg = trackGroups.get(i);
-              for (int j = 0; j < tg.length; j++) {
-                final Format format = tg.getFormat(j);
+            for (int i = 0; i < trackGroups.size(); i++) {
+              final Tracks.Group group = trackGroups.get(i);
+
+              if (group.getType() != C.TRACK_TYPE_VIDEO) {
+                continue;
+              }
+
+              for (int j = 0; j < group.length; j++) {
+                final Format format = group.getTrackFormat(j);
 
                 final String mimeType = format.sampleMimeType;
                 if (mimeType == null) {
@@ -216,7 +223,7 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
                           height,
                           format.frameRate,
                           exoPlayer.getDuration(),
-                          (short) trackGroups.length,
+                          (short) trackGroups.size(),
                           mimeType);
                   future.complete(info);
                   return;
@@ -233,18 +240,16 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
           }
 
           @Override
-          public void onPlayerError(PlaybackException error) {
+          public void onPlayerError(@NonNull PlaybackException error) {
             future.completeExceptionally(error);
           }
         };
 
     exoPlayer.addListener(listener);
 
-    future.whenComplete(
-        (videoDetail, throwable) -> exoPlayer.removeListener(listener));
+    future.whenComplete((videoDetail, throwable) -> exoPlayer.removeListener(listener));
 
-    DataSource.Factory dataSourceFactory =
-        new DefaultDataSourceFactory(context, Util.getUserAgent(context, "media_info"));
+    DataSource.Factory dataSourceFactory = new DefaultDataSource.Factory(context);
     exoPlayer.setMediaSource(
         new ProgressiveMediaSource.Factory(dataSourceFactory)
             .createMediaSource(MediaItem.fromUri(Uri.parse(path))));
@@ -286,8 +291,9 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
             CompletableFuture<String> future = new CompletableFuture<>();
 
             mainThreadHandler.post(
-                () -> handleThumbnailExoPlayer(context, path, width, height, positionMs, target,
-                    future));
+                () ->
+                    handleThumbnailExoPlayer(
+                        context, path, width, height, positionMs, target, future));
 
             try {
               Log.d(TAG, "Await thumbnail result.");
@@ -323,7 +329,7 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
 
     surface.setFrameFinished(
         () -> {
-            Log.d(TAG,"handleThumbnailExoPlayer::setFrameFinished::init ");
+          Log.d(TAG, "handleThumbnailExoPlayer::setFrameFinished::init ");
 
           try {
             surface.awaitNewImage(500);
@@ -347,34 +353,30 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
     final Listener eventListener =
         new Listener() {
           @Override
-          public void onPlayerError(PlaybackException error) {
-              Log.e(TAG, "Player error", error);
-              future.completeExceptionally(error);
+          public void onPlayerError(@NonNull PlaybackException error) {
+            Log.e(TAG, "Player error", error);
+            future.completeExceptionally(error);
           }
 
-            @Override
-            public void onPlayWhenReadyChanged(boolean playWhenReady, int reason) {
-                Log.d(TAG, "onPlayWhenReadyChanged");
+          @Override
+          public void onPlayWhenReadyChanged(boolean playWhenReady, int reason) {
+            Log.d(TAG, "onPlayWhenReadyChanged");
 
-                exoPlayer.seekTo(positionMs);
-                Log.d(TAG,
-                        "onPlayWhenReadyChanged - Done seekTo: " + positionMs);
-            }
+            exoPlayer.seekTo(positionMs);
+            Log.d(TAG, "onPlayWhenReadyChanged - Done seekTo: " + positionMs);
+          }
         };
 
     exoPlayer.addListener(eventListener);
 
-    future.whenComplete(
-        (s, throwable) -> exoPlayer.removeListener(eventListener));
+    future.whenComplete((s, throwable) -> exoPlayer.removeListener(eventListener));
 
-    DataSource.Factory dataSourceFactory =
-        new DefaultDataSourceFactory(context, Util.getUserAgent(context, "media_info"));
+    DataSource.Factory dataSourceFactory = new DefaultDataSource.Factory(context);
 
     exoPlayer.setMediaSource(
         new ProgressiveMediaSource.Factory(dataSourceFactory)
             .createMediaSource(MediaItem.fromUri(Uri.parse(path))),
-        true
-    );
+        true);
     exoPlayer.prepare();
     Log.d(TAG, "done prepare..");
 
@@ -385,8 +387,7 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
   private synchronized void ensureExoPlayer() {
     if (exoPlayer == null) {
       DefaultTrackSelector selector = new DefaultTrackSelector(applicationContext);
-      exoPlayer = new SimpleExoPlayer.Builder(applicationContext).setTrackSelector(selector)
-          .build();
+      exoPlayer = new ExoPlayer.Builder(applicationContext).setTrackSelector(selector).build();
 
       int indexOfAudioRenderer = -1;
       for (int i = 0; i < exoPlayer.getRendererCount(); i++) {
@@ -401,7 +402,7 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
     }
 
     exoPlayer.setPlayWhenReady(false);
-//    exoPlayer.stop(true);
+    //    exoPlayer.stop(true);
   }
 
   private void ensureSurface(int width, int height) {
