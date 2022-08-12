@@ -1,3 +1,7 @@
+## 0.11.0
+
+* Android: **BREAKING CHANGE** Plugin now depends on ExoPlayer 2.18.1
+
 ## 0.10.0
 
 * Migrate project for Flutter 2.10
