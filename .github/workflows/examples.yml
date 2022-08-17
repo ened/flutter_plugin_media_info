@@ -20,7 +20,7 @@ jobs:
 
       - name: build
         run: |
-          cd example && flutter build apk --debug
+          cd example && flutter build apk --debug && flutter build apk --release
 
   example_ios:
     runs-on: macos-latest
@@ -32,4 +32,4 @@ jobs:
           architecture: x64
       - name: build
         run: |
-          cd example && flutter build ios --debug --no-codesign
+          cd example && flutter build ios --debug --no-codesign && flutter build ios --release --no-codesign
