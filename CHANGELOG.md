@@ -1,3 +1,7 @@
+## 0.11.1
+
+* Android: Require `compileSdkVersion 32`
+
 ## 0.11.0
 
 * Android: **BREAKING CHANGE** Plugin now depends on ExoPlayer 2.18.1
