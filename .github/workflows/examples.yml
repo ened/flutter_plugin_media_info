@@ -19,7 +19,7 @@ jobs:
 
       - name: build
         run: |
-          cd example && flutter build apk --{{ matrix.type }}
+          cd example && flutter build apk --${{ matrix.type }}
 
   example_ios:
     runs-on: macos-latest
@@ -34,4 +34,4 @@ jobs:
           architecture: x64
       - name: build
         run: |
-          cd example && flutter build ios --{{ matrix.type }} --no-codesign
+          cd example && flutter build ios --${{ matrix.type }} --no-codesign
