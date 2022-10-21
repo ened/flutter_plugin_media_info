@@ -44,7 +44,7 @@ class VideoUtils {
 
         try {
           frameRate = Float.parseFloat(str);
-        } catch (Throwable e) {
+        } catch (Exception e) {
           frameRate = readFrameRateUsingExtractor(file);
         }
 
@@ -62,7 +62,7 @@ class VideoUtils {
           retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE);
 
       return new VideoDetail(width, height, frameRate, durationMs, numTracks, mimeType);
-    } catch (Throwable e) {
+    } catch (Exception e) {
       Log.e(TAG, file.getAbsolutePath(), e);
       return null;
     }
@@ -86,7 +86,7 @@ class VideoUtils {
           }
         }
       }
-    } catch (Throwable e) {
+    } catch (Exception e) {
       Log.e(TAG, file.getAbsolutePath(), e);
     } finally {
       // Release stuff

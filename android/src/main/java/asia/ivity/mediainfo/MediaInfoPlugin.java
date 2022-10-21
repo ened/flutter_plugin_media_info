@@ -70,6 +70,10 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
     applicationContext = null;
     methodChannel.setMethodCallHandler(null);
     methodChannel = null;
+
+    if (executorService != null) {
+      executorService.shutdown();
+    }
   }
 
   private ThreadPoolExecutor executorService;
