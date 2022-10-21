@@ -74,6 +74,8 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
     if (executorService != null) {
       executorService.shutdown();
     }
+
+    releaseExoPlayerAndResources();
   }
 
   private ThreadPoolExecutor executorService;
@@ -155,9 +157,11 @@ public class MediaInfoPlugin implements MethodCallHandler, FlutterPlugin {
                   () -> result.error("MediaInfo", e.getCause().getMessage(), null));
             }
 
-            if (executorService.getQueue().size() < 1) {
-              mainThreadHandler.post(this::releaseExoPlayerAndResources);
-            }
+            mainThreadHandler.postDelayed(() -> {
+              if (executorService.getQueue().size() < 1) {
+                releaseExoPlayerAndResources();
+              }
+            }, 3000);
           });
     } else {
       executorService.execute(
