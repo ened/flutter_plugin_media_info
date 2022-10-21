@@ -53,7 +53,7 @@ class MediaInfo {
     if (mimeType?.startsWith('image') == true) {
       Completer<ui.Image> completer = Completer<ui.Image>();
 
-      final stream = FileImage(File(path)).resolve(ImageConfiguration());
+      final stream = FileImage(File(path)).resolve(const ImageConfiguration());
 
       final ImageStreamListener listener =
           ImageStreamListener((ImageInfo image, __) {
