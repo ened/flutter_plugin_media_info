@@ -14,9 +14,13 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  integration_test:
+    sdk: flutter
 
   media_info:
     path: ../
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/videos/

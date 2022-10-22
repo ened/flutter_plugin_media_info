@@ -3,8 +3,10 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:media_info/media_info.dart';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
+
+import 'package:media_info/media_info.dart';
 
 void main() => runApp(MyApp());
 
@@ -18,6 +20,16 @@ class Resolution {
 
   final int w;
   final int h;
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is Resolution && other.w == w && other.h == h;
+  }
+
+  @override
+  int get hashCode => w.hashCode ^ h.hashCode;
 }
 
 const List<Resolution> _resolutions = [
@@ -125,102 +137,133 @@ class _MyAppState extends State<MyApp> {
       mainAxisSize: MainAxisSize.min,
       children: [
         FloatingActionButton(
+          key: Key("asset file"),
+          child: Icon(Icons.file_copy),
+          tooltip: 'Load Asset',
+          onPressed: _loadFromAsset,
+        ),
+        SizedBox(width: 24),
+        FloatingActionButton(
           key: Key("local file"),
           child: Icon(Icons.attach_file),
-          onPressed: () async {
-            final FilePickerResult? mediaFile =
-                await FilePicker.platform.pickFiles();
-
-            if (!mounted || mediaFile == null) {
-              return;
-            }
-
-            setState(() {
-              _file = mediaFile.files.single.path;
-              _mediaInfoCache = null;
-              _thumbnails.clear();
-            });
-
-            final Map<String, dynamic> mediaInfo =
-                await _mediaInfo.getMediaInfo(_file!);
-
-            if (!mounted || mediaInfo.isEmpty) {
-              return;
-            }
-
-            setState(() {
-              _mediaInfoCache = mediaInfo;
-            });
-
-            final Directory cacheDir = await getTemporaryDirectory();
-            final int cacheName = _file.hashCode;
-
-            final int w = mediaInfo['width'];
-            final int h = mediaInfo['height'];
-
-            final String mime = mediaInfo['mimeType'];
-            if (mime.startsWith("video/")) {
-              Set<Resolution> resolutions = Set();
-              resolutions.addAll(_resolutions);
-              resolutions.add(Resolution(w, h));
-
-              for (final Resolution res in resolutions) {
-                final String target =
-                    File('${cacheDir.path}/$cacheName.${res.w}').path;
-                if (File(target).existsSync()) {
-                  File(target).deleteSync();
-                }
-
-                _thumbnails['${res.w}x${res.h}'] = _mediaInfo.generateThumbnail(
-                  _file!,
-                  target,
-                  res.w,
-                  res.h,
-                  positionMs: 100,
-                );
-              }
-            }
-
-            setState(() {});
-          },
+          onPressed: _selectFile,
         ),
         SizedBox(width: 24),
         FloatingActionButton(
           key: Key("remote file"),
           child: Icon(Icons.wifi),
-          onPressed: () async {
-            setState(() {
-              _file = "remote file";
-              _mediaInfoCache = null;
-              _thumbnails.clear();
-            });
-
-            Set<Resolution> resolutions = Set();
-            resolutions.add(Resolution(1280, 720));
-
-            final Directory cacheDir = await getTemporaryDirectory();
-            final int cacheName = _file.hashCode;
-
-            for (final Resolution res in resolutions) {
-              final String target =
-                  File('${cacheDir.path}/$cacheName.${res.w}').path;
-              if (File(target).existsSync()) {
-                File(target).deleteSync();
-              }
-
-              _thumbnails['${res.w}x${res.h}'] = _mediaInfo.generateThumbnail(
-                "https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4",
-                target,
-                res.w,
-                res.h,
-                positionMs: 5000,
-              );
-            }
-
-            setState(() {});
-          },
+          onPressed: _loadRemoteFile,
         ),
       ],
     );
+  }
+
+  void _loadFromAsset() async {
+    var dir = Directory.systemTemp.createTempSync();
+    var temp = File("${dir.path}/video.mp4")..createSync();
+
+    final bytes =
+        await rootBundle.load('assets/videos/pexels_videos_2268807.mp4');
+    temp.writeAsBytesSync(
+        bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes));
+
+    setState(() {
+      _file = temp.path;
+      _mediaInfoCache = null;
+      _thumbnails.clear();
+    });
+
+    _fetchFileDetails();
+  }
+
+  void _selectFile() async {
+    final FilePickerResult? mediaFile = await FilePicker.platform.pickFiles();
+
+    if (!mounted || mediaFile == null) {
+      return;
+    }
+
+    setState(() {
+      _file = mediaFile.files.single.path;
+      _mediaInfoCache = null;
+      _thumbnails.clear();
+    });
+
+    _fetchFileDetails();
+  }
+
+  void _fetchFileDetails() async {
+    final Map<String, dynamic> mediaInfo =
+        await _mediaInfo.getMediaInfo(_file!);
+
+    if (!mounted || mediaInfo.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _mediaInfoCache = mediaInfo;
+    });
+
+    final Directory cacheDir = await getTemporaryDirectory();
+    final int cacheName = _file.hashCode;
+
+    final int w = mediaInfo['width'];
+    final int h = mediaInfo['height'];
+
+    final String mime = mediaInfo['mimeType'];
+    if (mime.startsWith("video/")) {
+      Set<Resolution> resolutions = Set();
+      resolutions.addAll(_resolutions);
+      resolutions.add(Resolution(w, h));
+
+      for (final Resolution res in resolutions) {
+        final String target =
+            File('${cacheDir.path}/$cacheName.${res.w}.${res.h}').path;
+        if (File(target).existsSync()) {
+          File(target).deleteSync();
+        }
+
+        _thumbnails['${res.w}x${res.h}'] = _mediaInfo.generateThumbnail(
+          _file!,
+          target,
+          res.w,
+          res.h,
+          positionMs: 100,
+        );
+      }
+    }
+
+    setState(() {});
+  }
+
+  void _loadRemoteFile() async {
+    setState(() {
+      _file = "remote file";
+      _mediaInfoCache = null;
+      _thumbnails.clear();
+    });
+
+    Set<Resolution> resolutions = Set();
+    resolutions.add(Resolution(1280, 720));
+
+    final Directory cacheDir = await getTemporaryDirectory();
+    final int cacheName = _file.hashCode;
+
+    for (final Resolution res in resolutions) {
+      final String target = File('${cacheDir.path}/$cacheName.${res.w}').path;
+      if (File(target).existsSync()) {
+        File(target).deleteSync();
+      }
+
+      _thumbnails['${res.w}x${res.h}'] = _mediaInfo.generateThumbnail(
+        "https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4",
+        target,
+        res.w,
+        res.h,
+        positionMs: 5000,
+      );
+    }
+
+    setState(() {});
   }
 }

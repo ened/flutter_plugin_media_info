@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -54,14 +53,18 @@ class MediaInfo {
     if (mimeType?.startsWith('image') == true) {
       Completer<ui.Image> completer = Completer<ui.Image>();
 
-      final stream = FileImage(File(path)).resolve(ImageConfiguration());
+      final stream = FileImage(File(path)).resolve(const ImageConfiguration());
 
       final ImageStreamListener listener =
           ImageStreamListener((ImageInfo image, __) {
         if (!completer.isCompleted) {
           completer.complete(image.image);
         }
-      });
+      }, onError: ((exception, stackTrace) {
+        if (!completer.isCompleted) {
+          completer.completeError(exception, stackTrace);
+        }
+      }));
 
       stream.addListener(listener);
 

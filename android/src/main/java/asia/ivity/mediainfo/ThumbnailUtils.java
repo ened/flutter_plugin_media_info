@@ -42,10 +42,9 @@ class ThumbnailUtils {
 
       fos = new FileOutputStream(cacheFile);
       bitmap.compress(Bitmap.CompressFormat.JPEG, 80, fos);
-      fos.close();
 
       return cacheFile;
-    } catch (Throwable e) {
+    } catch (Exception e) {
       Log.e(TAG, "during thumbnail creation", e);
       return null;
     } finally {
