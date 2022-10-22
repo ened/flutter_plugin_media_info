@@ -60,7 +60,11 @@ class MediaInfo {
         if (!completer.isCompleted) {
           completer.complete(image.image);
         }
-      });
+      }, onError: ((exception, stackTrace) {
+        if (!completer.isCompleted) {
+          completer.completeError(exception, stackTrace);
+        }
+      }));
 
       stream.addListener(listener);
 
