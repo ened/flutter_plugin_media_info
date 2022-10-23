@@ -1,4 +1,13 @@
+## 0.12.0+1
+
+* Add missing changelog for 0.12.0:
+  * Fix Issue #12, a performance issue when using the package at scale
+  * Extend the test suite to include integration tests and CI/CD
+
 ## 0.12.0
+
+* Fix Issue #12, a performance issue when using the package at scale
+* Extend the test suite to include integration tests and CI/CD
 
 ## 0.11.1
 
