@@ -1,3 +1,7 @@
+## 0.12.0+2
+
+* Licensing info + formatting corrected
+
 ## 0.12.0+1
 
 * Add missing changelog for 0.12.0:
