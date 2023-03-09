@@ -108,7 +108,6 @@ class MediaInfo {
     /// Target height.
     /// TODO: Consider to remove the field or specify the fit/crop ratio better.
     int height, {
-
     /// Position of the video in milliseconds where to generate the image from
     int positionMs = 0,
   }) async {
