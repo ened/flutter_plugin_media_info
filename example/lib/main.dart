@@ -8,11 +8,13 @@ import 'package:path_provider/path_provider.dart';
 
 import 'package:media_info/media_info.dart';
 
-void main() => runApp(MyApp());
+void main() => runApp(const MyApp());
 
 class MyApp extends StatefulWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
-  _MyAppState createState() => _MyAppState();
+  State<MyApp> createState() => _MyAppState();
 }
 
 class Resolution {
@@ -76,7 +78,7 @@ class _MyAppState extends State<MyApp> {
                     (_mediaInfoCache?.keys ?? <String>[])
                         .map((String k) => '$k: ${_mediaInfoCache![k]}')
                         .join(',\n\n'),
-                    style: Theme.of(context).textTheme.bodyText2,
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   Builder(
                     builder: (BuildContext context) {
@@ -105,14 +107,14 @@ class _MyAppState extends State<MyApp> {
                               if (snapshot.hasError) {
                                 return Text(
                                   'E: ${snapshot.error}',
-                                  style: TextStyle(color: Colors.red),
+                                  style: const TextStyle(color: Colors.red),
                                 );
                               }
 
                               return const SizedBox();
                             },
                           ),
-                          Divider(),
+                          const Divider(),
                         ]);
                       }
 
@@ -137,22 +139,22 @@ class _MyAppState extends State<MyApp> {
       mainAxisSize: MainAxisSize.min,
       children: [
         FloatingActionButton(
-          key: Key("asset file"),
-          child: Icon(Icons.file_copy),
+          key: const Key("asset file"),
           tooltip: 'Load Asset',
           onPressed: _loadFromAsset,
+          child: const Icon(Icons.file_copy),
         ),
-        SizedBox(width: 24),
+        const SizedBox(width: 24),
         FloatingActionButton(
-          key: Key("local file"),
-          child: Icon(Icons.attach_file),
+          key: const Key("local file"),
           onPressed: _selectFile,
+          child: const Icon(Icons.attach_file),
         ),
-        SizedBox(width: 24),
+        const SizedBox(width: 24),
         FloatingActionButton(
-          key: Key("remote file"),
-          child: Icon(Icons.wifi),
+          key: const Key("remote file"),
           onPressed: _loadRemoteFile,
+          child: const Icon(Icons.wifi),
         ),
       ],
     );
@@ -212,7 +214,7 @@ class _MyAppState extends State<MyApp> {
 
     final String mime = mediaInfo['mimeType'];
     if (mime.startsWith("video/")) {
-      Set<Resolution> resolutions = Set();
+      Set<Resolution> resolutions = {};
       resolutions.addAll(_resolutions);
       resolutions.add(Resolution(w, h));
 
@@ -243,8 +245,8 @@ class _MyAppState extends State<MyApp> {
       _thumbnails.clear();
     });
 
-    Set<Resolution> resolutions = Set();
-    resolutions.add(Resolution(1280, 720));
+    Set<Resolution> resolutions = {};
+    resolutions.add(const Resolution(1280, 720));
 
     final Directory cacheDir = await getTemporaryDirectory();
     final int cacheName = _file.hashCode;
