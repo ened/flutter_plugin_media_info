@@ -76,7 +76,7 @@ class _MyAppState extends State<MyApp> {
                     (_mediaInfoCache?.keys ?? <String>[])
                         .map((String k) => '$k: ${_mediaInfoCache![k]}')
                         .join(',\n\n'),
-                    style: Theme.of(context).textTheme.bodyText2,
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   Builder(
                     builder: (BuildContext context) {
