@@ -8,7 +8,7 @@ environment:
   flutter: ">=1.12.13+hotfix.6"
 
 dependencies:
-  mime: ^1.0.0
+  mime: ^2.0.0
   flutter:
     sdk: flutter
 
